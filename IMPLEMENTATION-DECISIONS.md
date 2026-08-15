@@ -320,6 +320,21 @@ all present essentially as described, with the corrected line numbers below.
    call's rasters. The one hazard is `collectComponents`'s in-place mask
    mutation noted above.
 
+**Update (post-Phase 3):** the real tee family filter at `rawObjectMask.ts:324`
+is `teeComponents = brightComponents.filter(...)` — an assignment to a `let`
+declared earlier (line 315, `let teeComponents: MaskComponent[] = [];`), not a
+fresh `const` declaration. Phase 1's compiler originally only recognized the
+`const <ident> = <expr>.filter(...)` shape; Phase 3's adversarial pass
+confirmed this gap precisely (`TOPH101`, no crash, no mis-instrumentation —
+`test/adversarial/11-known-gap-let-assignment.test.ts` at the time). The
+compiler now supports both the `const`-declaration and the
+assignment-to-a-pre-declared-identifier shapes as equally first-class (see
+`ValidFilterSite.bindingKind` in `src/compiler/validate.ts`); the stale
+"gap exists" test was replaced with `test/compiler/assignment-shape.test.ts`,
+a permanent golden test proving the assignment form. This was closed ahead
+of Phase 4, not during it, per the "don't touch ChainSpot until the
+contract is stable enough to consume" rule.
+
 ### Exact proposed patch sites for Phase 4 (`p1.tee.geometry` only)
 
 Scoped to the brief's Phase 4 instruction — **only** the tee family filter,

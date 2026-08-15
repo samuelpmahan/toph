@@ -107,8 +107,9 @@ function emitFilterSite(
 	const stageId = ids.nextStageId();
 
 	const stageLine = builder.currentLine();
+	const bindingPrefix = site.bindingKind === 'declare' ? 'const ' : '';
 	builder.append(`const __toph_s${stageId} = __toph.enterStage(${stageId});\n`);
-	builder.append(`const ${site.resultIdent} = ${site.arrayExprText}.filter((${site.paramText}) => {\n`);
+	builder.append(`${bindingPrefix}${site.resultIdent} = ${site.arrayExprText}.filter((${site.paramText}) => {\n`);
 	builder.append(`  const __toph_e = __toph.enterElement(__toph_s${stageId});\n`);
 
 	for (const group of site.checkGroups) {

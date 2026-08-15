@@ -43,6 +43,11 @@ export interface ValidFilterSite {
 	node: ts.Statement;
 	stageName: string;
 	resultIdent: string;
+	/** 'declare': `const <resultIdent> = ...`. 'assign': `<resultIdent> = ...` (a plain
+	 * assignment to an identifier declared earlier, e.g. ChainSpot's `let x = []; ...;
+	 * x = arr.filter(...)` pattern) -- codegen must reproduce whichever binding form the
+	 * original code used, not always inject `const`. */
+	bindingKind: 'declare' | 'assign';
 	/** Original source text of the array expression being `.filter`ed. */
 	arrayExprText: string;
 	/** The filter callback's single parameter name. */
@@ -257,17 +262,41 @@ function validateFilterSite(
 		diagnostics.push(diagnosticAtNode('TOPH101', message, sourceFile, node));
 		return null;
 	};
-	const shapeError = `@toph filter "${stageName}" must be attached to a "const <ident> = <expr>.filter((<param>) => { ... })" statement whose body is zero or more check groups followed by "return true;".`;
+	const shapeError = `@toph filter "${stageName}" must be attached to a "const <ident> = <expr>.filter((<param>) => { ... })" statement, or a "<ident> = <expr>.filter((<param>) => { ... })" assignment to a previously-declared identifier, whose body is zero or more check groups followed by "return true;".`;
 
-	if (!ts.isVariableStatement(node)) return fail(shapeError);
-	const declList = node.declarationList;
-	if (declList.declarations.length !== 1) return fail(shapeError);
-	const decl = declList.declarations[0];
-	if (!ts.isIdentifier(decl.name)) return fail(shapeError);
-	const resultIdent = decl.name.text;
+	// Two supported host-statement shapes bind `resultIdent`/`init` before the shared
+	// body-shape validation below (identical for both): a fresh `const` declaration, or
+	// a plain assignment to an identifier declared earlier (e.g. `let x = []; ...; x =
+	// arr.filter(...)`) -- the real ChainSpot target uses the latter (a `let` seeded
+	// with a default and reassigned inside a conditional block), so both are first-class,
+	// not one "supported" and one "worked around."
+	let resultIdent: string;
+	let bindingKind: 'declare' | 'assign';
+	let init: ts.Expression;
 
-	const init = decl.initializer;
-	if (!init || !ts.isCallExpression(init)) return fail(shapeError);
+	if (ts.isVariableStatement(node)) {
+		const declList = node.declarationList;
+		if (declList.declarations.length !== 1) return fail(shapeError);
+		const decl = declList.declarations[0];
+		if (!ts.isIdentifier(decl.name)) return fail(shapeError);
+		if (!decl.initializer) return fail(shapeError);
+		resultIdent = decl.name.text;
+		bindingKind = 'declare';
+		init = decl.initializer;
+	} else if (
+		ts.isExpressionStatement(node) &&
+		ts.isBinaryExpression(node.expression) &&
+		node.expression.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+		ts.isIdentifier(node.expression.left)
+	) {
+		resultIdent = node.expression.left.text;
+		bindingKind = 'assign';
+		init = node.expression.right;
+	} else {
+		return fail(shapeError);
+	}
+
+	if (!ts.isCallExpression(init)) return fail(shapeError);
 	if (!ts.isPropertyAccessExpression(init.expression) || init.expression.name.text !== 'filter') {
 		return fail(shapeError);
 	}
@@ -308,7 +337,7 @@ function validateFilterSite(
 
 	if (siteHasErrors) return null;
 
-	return { node, stageName, resultIdent, arrayExprText, paramText, checkGroups, finalReturnText, sourceLine };
+	return { node, stageName, resultIdent, bindingKind, arrayExprText, paramText, checkGroups, finalReturnText, sourceLine };
 }
 
 /**
