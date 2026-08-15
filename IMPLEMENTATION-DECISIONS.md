@@ -289,24 +289,30 @@ all present essentially as described, with the corrected line numbers below.
    and the flood order itself (which determines label assignment) lives
    only inside `collectComponents`.
 
-5. **No ground truth exists for Heritage anywhere in the repo**, and there
-   is a real **domain-mismatch risk**: `resources/held-out/README.md`
-   documents `HeritagePark-Main.png` as an "OVERLAY-ONLY (unlabeled)... UDisc
-   app screenshot," and `grayt-tuning-report.md` states explicitly that these
-   captures have "no rendered 'hollow oval tee-pad' symbol anywhere... that
-   symbol is specific to ChainSpot's own map style." `detectRawObjectMask`
-   hunts for ChainSpot's own rendered HSV-distinctive glyph — **it is
-   plausible the real Heritage "first loss" is at the mask-threshold stage
-   for every hole (no bright pixels matching the HSV window at all), not a
-   near-miss geometry rejection.** The brief's illustrative example
-   (`component C143 rejected at area.min: 109 < 157.14`) is a *format*
-   example, not a claim about Heritage's actual failure mode — Phase 6 must
-   report whatever the real evidence shows, including "the loss is at
-   thresholding, for every hole" if that's what the trace reveals. Ground
-   truth (approximate tee-pad pixel coordinates per hole) does not exist and
-   must be hand-produced for Phase 6 — likely by visual inspection of the
-   PNG, recorded as a small JSON sidecar consumed only by the diagnostic
-   harness (never by production code).
+5. **No ground truth exists for Heritage anywhere in the repo.** Visual
+   inspection of `HeritagePark-Main.png` (1290×2796) confirms it's a UDisc
+   app screenshot ("Towne Lake, Red Tees", satellite basemap) with 18
+   numbered holes, each marked by a small white flag/tee glyph and a black
+   numbered badge — **not** ChainSpot's own rendered course-annotation
+   style. This refines rather than confirms the earlier "domain mismatch"
+   read: `grayt-tuning-report.md`'s claim ("no rendered 'hollow oval
+   tee-pad' symbol") is specifically about ChainSpot's own oval tee-pad
+   glyph, and that's accurate — but the image is not glyph-free. UDisc's
+   white flag icons are bright, plausibly HSV-threshold-bright-mask
+   positive, and the black number badges are plausibly dark-mask badge-pool
+   positive. **The more likely failure mode is therefore that bright/dark
+   components exist and clear the mask threshold, but the flag-icon shape
+   doesn't match the geometry gates tuned for ChainSpot's own oval tee-pad
+   (`bboxAspect`, min/max dimension ratios relative to basket/badge size)**
+   — i.e. closer to the brief's illustrative near-miss-geometry-rejection
+   format than a total absence-of-bright-pixels loss, though this is a
+   plausibility read from a screenshot, not a claim to treat as
+   established — Phase 6 must report whatever the real trace shows, at
+   whichever stage it actually shows a loss. Ground truth (approximate
+   tee-pad pixel coordinates per hole) does not exist and must be
+   hand-produced for Phase 6 — by visual inspection of the PNG, recorded as
+   a small JSON sidecar consumed only by the diagnostic harness (never by
+   production code).
 
 6. **Mutation/aliasing**: `raster.rgba` is read-only everywhere (safe to
    snapshot/reuse). `bright`/`dark`/`queue` are freshly allocated per call
