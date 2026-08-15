@@ -1,0 +1,12 @@
+{
+  "objects": [
+    {
+      "label": "H1",
+      "point": {
+        "x": 700,
+        "y": 1146
+      },
+      "expect": "tee"
+    }
+  ]
+}
