@@ -1,0 +1,312 @@
+{
+  "tees": [],
+  "badges": [
+    {
+      "xPx": 687.5,
+      "yPx": 1220.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1552,
+      "fill": 0.8981481481481481
+    },
+    {
+      "xPx": 894,
+      "yPx": 1268.5,
+      "widthPx": 49,
+      "heightPx": 36,
+      "areaPx": 1306,
+      "fill": 0.7403628117913832
+    },
+    {
+      "xPx": 361.5,
+      "yPx": 1377.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1388,
+      "fill": 0.8032407407407407
+    },
+    {
+      "xPx": 883.5,
+      "yPx": 1385.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1475,
+      "fill": 0.8535879629629629
+    },
+    {
+      "xPx": 1198.5,
+      "yPx": 1418.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1414,
+      "fill": 0.8182870370370371
+    },
+    {
+      "xPx": 169.5,
+      "yPx": 1429.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1402,
+      "fill": 0.8113425925925926
+    },
+    {
+      "xPx": 631.5,
+      "yPx": 1440.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1528,
+      "fill": 0.8842592592592593
+    },
+    {
+      "xPx": 364.5,
+      "yPx": 1468.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1439,
+      "fill": 0.8327546296296297
+    },
+    {
+      "xPx": 1064.5,
+      "yPx": 1489.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1474,
+      "fill": 0.8530092592592593
+    },
+    {
+      "xPx": 809.5,
+      "yPx": 1499.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1451,
+      "fill": 0.8396990740740741
+    },
+    {
+      "xPx": 217.5,
+      "yPx": 1501.5,
+      "widthPx": 50,
+      "heightPx": 36,
+      "areaPx": 1322,
+      "fill": 0.7344444444444445
+    },
+    {
+      "xPx": 919.5,
+      "yPx": 1540.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1468,
+      "fill": 0.8495370370370371
+    },
+    {
+      "xPx": 729.5,
+      "yPx": 1576.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1407,
+      "fill": 0.8142361111111112
+    },
+    {
+      "xPx": 587.5,
+      "yPx": 1602.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1365,
+      "fill": 0.7899305555555556
+    },
+    {
+      "xPx": 1124,
+      "yPx": 1784.5,
+      "widthPx": 49,
+      "heightPx": 36,
+      "areaPx": 1328,
+      "fill": 0.7528344671201814
+    },
+    {
+      "xPx": 698.5,
+      "yPx": 1829.5,
+      "widthPx": 50,
+      "heightPx": 36,
+      "areaPx": 1403,
+      "fill": 0.7794444444444445
+    },
+    {
+      "xPx": 648.5,
+      "yPx": 1854.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1360,
+      "fill": 0.7870370370370371
+    },
+    {
+      "xPx": 855.5,
+      "yPx": 1865.5,
+      "widthPx": 48,
+      "heightPx": 36,
+      "areaPx": 1339,
+      "fill": 0.7748842592592593
+    }
+  ],
+  "baskets": [
+    {
+      "xPx": 775.5,
+      "yPx": 1215,
+      "centerXPx": 775.5,
+      "centerYPx": 1182.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 547.5,
+      "yPx": 1329,
+      "centerXPx": 547.5,
+      "centerYPx": 1296.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 310.5,
+      "yPx": 1334,
+      "centerXPx": 310.5,
+      "centerYPx": 1301.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 1167.5,
+      "yPx": 1346,
+      "centerXPx": 1167.5,
+      "centerYPx": 1313.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 1022.5,
+      "yPx": 1407,
+      "centerXPx": 1022.5,
+      "centerYPx": 1374.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 89.5,
+      "yPx": 1450,
+      "centerXPx": 89.5,
+      "centerYPx": 1417.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 281.5,
+      "yPx": 1453,
+      "centerXPx": 281.5,
+      "centerYPx": 1420.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 468.5,
+      "yPx": 1455,
+      "centerXPx": 468.5,
+      "centerYPx": 1422.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 751.5,
+      "yPx": 1488,
+      "centerXPx": 751.5,
+      "centerYPx": 1455.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 655.5,
+      "yPx": 1541,
+      "centerXPx": 655.5,
+      "centerYPx": 1508.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 1126.5,
+      "yPx": 1624,
+      "centerXPx": 1126.5,
+      "centerYPx": 1591.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 641.5,
+      "yPx": 1701,
+      "centerXPx": 641.5,
+      "centerYPx": 1668.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 696.5,
+      "yPx": 1738,
+      "centerXPx": 696.5,
+      "centerYPx": 1705.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 949.5,
+      "yPx": 1940,
+      "centerXPx": 949.5,
+      "centerYPx": 1907.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    },
+    {
+      "xPx": 639.5,
+      "yPx": 1944,
+      "centerXPx": 639.5,
+      "centerYPx": 1911.5,
+      "widthPx": 42,
+      "heightPx": 66,
+      "areaPx": 1746,
+      "fill": 0.6298701298701299
+    }
+  ],
+  "diagnostics": {
+    "brightComponentCount": 1697,
+    "darkComponentCount": 2667,
+    "basketShapePoolCount": 51,
+    "badgeShapePoolCount": 19,
+    "thresholds": {
+      "brightValueMin": 210,
+      "brightSaturationMax": 45,
+      "darkValueMax": 45
+    }
+  }
+}
