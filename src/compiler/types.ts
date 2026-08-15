@@ -26,9 +26,30 @@ export interface CheckManifestEntry {
 	source: SourceLocation;
 }
 
+/** One `@toph snapshot` site: a named raster asset captured immediately before its
+ * annotated statement runs. `kind` has exactly one supported value ('mask') for now --
+ * see directives.ts's parseSnapshotArgs. */
+export interface AssetManifestEntry {
+	id: number;
+	name: string;
+	kind: 'mask';
+	source: SourceLocation;
+}
+
+/** One distinct entity-kind name seen across `@toph entities <kind>` sites in a compile
+ * (e.g. "component"). Multiple `@toph entities` sites sharing the same kind string
+ * reuse this same manifest entry's id -- see codegen.ts's entityKindIdByName map. */
+export interface EntityKindManifestEntry {
+	id: number;
+	name: string;
+	source: SourceLocation;
+}
+
 export interface ManifestFragment {
 	stages: StageManifestEntry[];
 	checks: CheckManifestEntry[];
+	assets: AssetManifestEntry[];
+	entityKinds: EntityKindManifestEntry[];
 }
 
 export interface CompilerDiagnostic {
@@ -48,6 +69,8 @@ export interface CompileResult {
 export interface IdAllocator {
 	nextStageId(): number;
 	nextCheckId(): number;
+	nextAssetId(): number;
+	nextEntityKindId(): number;
 }
 
 /**
@@ -67,6 +90,18 @@ export interface InternalStageManifestEntry extends StageManifestEntry {
 
 /** Internal-only extension of CheckManifestEntry -- see InternalStageManifestEntry. */
 export interface InternalCheckManifestEntry extends CheckManifestEntry {
+	generatedFile: string;
+	generatedLine: number;
+}
+
+/** Internal-only extension of AssetManifestEntry -- see InternalStageManifestEntry. */
+export interface InternalAssetManifestEntry extends AssetManifestEntry {
+	generatedFile: string;
+	generatedLine: number;
+}
+
+/** Internal-only extension of EntityKindManifestEntry -- see InternalStageManifestEntry. */
+export interface InternalEntityKindManifestEntry extends EntityKindManifestEntry {
 	generatedFile: string;
 	generatedLine: number;
 }

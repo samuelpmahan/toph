@@ -70,14 +70,52 @@ export interface CheckRecord {
 	pass: boolean;
 }
 
+/** The one currently-supported `@toph snapshot` asset kind. */
+export type AssetKind = 'mask';
+
+/** Metadata for one `@toph snapshot`-captured raster asset. Metadata only -- the actual
+ * pixel bytes are never part of TraceRun (see getRasterBytes's doc comment for why) and
+ * must be retrieved separately, while the session that snapshotted them is still
+ * active. */
+export interface AssetRecord {
+	id: number;
+	name: string;
+	kind: AssetKind;
+	widthPx: number;
+	heightPx: number;
+}
+
+/** One entity spawned by a `@toph entities <kind>` site. `ordinal` is 0-indexed and
+ * scoped to that one spawnEntities() call (its index within the spawned array).
+ * `attrs` holds the spawned object's own enumerable primitive-valued properties only
+ * (see spawnEntities's doc comment). There is deliberately no `kept` flag here (unlike
+ * ElementRecord) -- an entity can flow into more than one later filter stage over its
+ * lifetime, so "was it kept" is a per-stage question answered by the `checks` array,
+ * not a single fact owned by the entity itself. */
+export interface EntityRecord {
+	id: number;
+	kindId: number;
+	ordinal: number;
+	attrs: Record<string, number | string | boolean>;
+}
+
 /** The full accumulated output of one trace session. Always a plain, JSON-serializable
- * object -- no class instances, Maps, or Sets anywhere in this shape. */
+ * object -- no class instances, Maps, or Sets anywhere in this shape.
+ *
+ * `assets`/`entities` are optional and simply omitted (not present as empty arrays)
+ * when a session never calls snapshotRaster()/spawnEntities() -- exactly like
+ * `pipeline` is omitted when not provided. This keeps finishTrace()'s return value
+ * byte-for-byte identical to Phase 1-4 behavior for every session that doesn't use
+ * these new calls, rather than growing every existing TraceRun by two always-present
+ * empty arrays. */
 export interface TraceRun {
 	version: 1;
 	pipeline?: string;
 	stages: StageInvocationRecord[];
 	elements: ElementRecord[];
 	checks: CheckRecord[];
+	assets?: AssetRecord[];
+	entities?: EntityRecord[];
 }
 
 export interface StartTraceOptions {
@@ -100,8 +138,25 @@ interface Session {
 	 * this session" for enterElement()'s validation. */
 	nextOrdinalByStageInvocation: Map<number, number>;
 	/** elementId -> its record, so keep() and the comparators (given only an elementId)
-	 * can find/mutate the same object that lives in `elements`, in O(1). */
+	 * can find/mutate the same object that lives in `elements`, in O(1). This ALSO holds
+	 * entries for reused entity ids (see enterElement's ref-lookup path) that are
+	 * deliberately never pushed into `elements` itself -- elementsById is purely an
+	 * internal by-id lookup index, not a mirror of the public `elements` array. */
 	elementsById: Map<number, ElementRecord>;
+
+	/** Public metadata for every `@toph snapshot`-captured asset this session has seen. */
+	assets: AssetRecord[];
+	/** Public records for every entity `@toph entities` has spawned this session. */
+	entities: EntityRecord[];
+	/** assetId -> a private COPY of the bytes passed to snapshotRaster (never the
+	 * caller's original array reference) -- retrievable via getRasterBytes() only while
+	 * this session is active; never serialized into TraceRun (see getRasterBytes). */
+	rasterBytesById: Map<number, Uint8Array | Uint8ClampedArray>;
+	nextEntityId: number;
+	/** object reference -> the entity id spawnEntities() allocated for it, so a LATER
+	 * enterElement(stageInvocationId, ref) call passing the SAME object reference can
+	 * recover the SAME entity id instead of allocating a fresh ordinal one. */
+	entityIdByRef: WeakMap<object, number>;
 }
 
 let active: Session | null = null;
@@ -146,6 +201,11 @@ export function startTrace(opts: StartTraceOptions = {}): void {
 		seqByStageId: new Map(),
 		nextOrdinalByStageInvocation: new Map(),
 		elementsById: new Map(),
+		assets: [],
+		entities: [],
+		rasterBytesById: new Map(),
+		nextEntityId: 1,
+		entityIdByRef: new WeakMap(),
 	};
 }
 
@@ -164,6 +224,8 @@ export function finishTrace(): TraceRun {
 		checks: session.checks,
 	};
 	if (session.pipeline !== undefined) run.pipeline = session.pipeline;
+	if (session.assets.length > 0) run.assets = session.assets;
+	if (session.entities.length > 0) run.entities = session.entities;
 	active = null;
 	return run;
 }
@@ -184,8 +246,25 @@ export function enterStage(stageId: number): number {
 /** Records one element entering evaluation within stage invocation
  * `stageInvocationId` and returns a fresh element id. The element's ordinal is scoped
  * to that stage invocation (0 for the first element seen by that invocation, 1 for the
- * next, ...), not global across the whole session. */
-export function enterElement(stageInvocationId: number): number {
+ * next, ...), not global across the whole session.
+ *
+ * `ref` is an optional second parameter (added for entity identity -- see spawnEntities)
+ * -- existing generated code from Phase 1-4 that calls enterElement(stageInvocationId)
+ * with a single argument behaves identically to before; `ref` being `undefined` takes
+ * the exact same normal fresh-ordinal path it always has.
+ *
+ * When `ref` IS provided and was previously spawned as an entity (via spawnEntities) in
+ * the CURRENT session, enterElement returns that SAME entity id instead of allocating a
+ * fresh one -- no new ordinal is consumed and no new record is pushed into the public
+ * `elements` array (only entity-spawn sites contribute to `elements` in the ordinary
+ * way; a reused entity's identity already lives in `entities`). This is what lets a
+ * later `@toph filter`'s checks reference the SAME entity id a `@toph entities` site
+ * spawned for that exact object, rather than an unrelated fresh ordinal.
+ *
+ * When `ref` is provided but was never spawned (the common case -- most filter sites'
+ * elements have no upstream `@toph entities` spawn at all), this falls back to the
+ * normal fresh-ID allocation path unchanged. */
+export function enterElement(stageInvocationId: number, ref?: object): number {
 	const session = requireSession('enterElement');
 	const ordinal = session.nextOrdinalByStageInvocation.get(stageInvocationId);
 	if (ordinal === undefined) {
@@ -194,6 +273,19 @@ export function enterElement(stageInvocationId: number): number {
 				'which was not produced by enterStage() in the current trace session.'
 		);
 	}
+
+	if (ref !== undefined && ref !== null && typeof ref === 'object') {
+		const entityId = session.entityIdByRef.get(ref);
+		if (entityId !== undefined) {
+			// Internal by-id bookkeeping only (needed so the comparators/keep() below can
+			// resolve `stageInvocationId` for this call and record checks against it) --
+			// deliberately NOT pushed into session.elements, and does not consume/advance
+			// this invocation's ordinal counter.
+			session.elementsById.set(entityId, { id: entityId, stageInvocationId, ordinal, kept: false });
+			return entityId;
+		}
+	}
+
 	session.nextOrdinalByStageInvocation.set(stageInvocationId, ordinal + 1);
 
 	const id = session.nextElementId++;
@@ -251,4 +343,81 @@ export function keep(elementId: number): void {
 	const session = requireSession('keep');
 	const element = lookupElement(session, 'keep', elementId);
 	element.kept = true;
+}
+
+function copyPrimitiveAttrs(value: unknown): Record<string, number | string | boolean> {
+	const attrs: Record<string, number | string | boolean> = {};
+	if (value === null || typeof value !== 'object') return attrs;
+	for (const [key, propValue] of Object.entries(value as Record<string, unknown>)) {
+		if (typeof propValue === 'number' || typeof propValue === 'string' || typeof propValue === 'boolean') {
+			attrs[key] = propValue;
+		}
+		// Anything else (nested objects, arrays, functions, undefined, null, symbols) is
+		// silently skipped, per this function's contract.
+	}
+	return attrs;
+}
+
+/** Spawns one stable entity per element of `elements`, in array order. For each element
+ * (in order): allocates a fresh entity id; if the element is a non-null object,
+ * registers it in an internal WeakMap from that exact object reference to this entity
+ * id (so a LATER enterElement(stageInvocationId, ref) call passing the SAME reference
+ * recovers the SAME id -- see enterElement); copies the element's own enumerable
+ * primitive-valued (number/string/boolean) properties into an `attrs` record, silently
+ * skipping anything else (nested objects/arrays/functions); and pushes an entity record
+ * `{id, kindId, ordinal, attrs}` (ordinal = the element's index in `elements`) into the
+ * session. Returns the newly-allocated ids, in the same order as `elements`.
+ *
+ * Valid to call with zero later consumption -- nothing here depends on any subsequent
+ * enterElement() call ever looking a spawned entity back up. */
+export function spawnEntities(kindId: number, elements: readonly unknown[]): number[] {
+	const session = requireSession('spawnEntities');
+	const ids: number[] = [];
+	elements.forEach((el, ordinal) => {
+		const id = session.nextEntityId++;
+		if (el !== null && typeof el === 'object') {
+			session.entityIdByRef.set(el, id);
+		}
+		session.entities.push({ id, kindId, ordinal, attrs: copyPrimitiveAttrs(el) });
+		ids.push(id);
+	});
+	return ids;
+}
+
+/** Snapshots `ref`'s CURRENT bytes -- a real copy, not a reference -- into the active
+ * session's internal raster store, keyed by `assetId`, and records the asset's
+ * `{id, name, kind, widthPx, heightPx}` metadata into the session (surfaced later via
+ * finishTrace()'s `assets` array). The whole point of the copy is capturing the value
+ * before the caller mutates the original array in place (the real target this exists
+ * for -- ChainSpot's `collectComponents` -- does exactly that, using its mask argument
+ * as its own BFS visited-set). Throws the same "no active session" error style as the
+ * other runtime functions if called with none active. */
+export function snapshotRaster(
+	assetId: number,
+	name: string,
+	kind: AssetKind,
+	ref: Uint8Array | Uint8ClampedArray,
+	widthPx: number,
+	heightPx: number
+): void {
+	const session = requireSession('snapshotRaster');
+	session.rasterBytesById.set(assetId, ref.slice());
+	session.assets.push({ id: assetId, name, kind, widthPx, heightPx });
+}
+
+/** Retrieves a previously-snapshotted raster's bytes, while the session that
+ * snapshotted it is still active (i.e. before finishTrace()). Returns `undefined` if
+ * `assetId` was never snapshotted in the current session.
+ *
+ * Deliberately NOT part of the JSON-serializable TraceRun: raw pixel arrays would bloat
+ * a JSON trace enormously (a full-resolution image mask can be megabytes), and
+ * DESIGN.md's own model stores rasters as separate PNG files, not inline JSON. Toph's
+ * core has no PNG encoder and shouldn't gain one -- encoding/writing the bytes this
+ * returns is a concern for whatever harness consumes them, not this runtime. Throws the
+ * same "no active session" error style as the other runtime functions if called with
+ * none active, since "the active session's internal raster store" this reads from only
+ * exists while a session is active. */
+export function getRasterBytes(assetId: number): Uint8Array | Uint8ClampedArray | undefined {
+	const session = requireSession('getRasterBytes');
+	return session.rasterBytesById.get(assetId);
 }

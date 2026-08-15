@@ -46,7 +46,7 @@ describe('(a) duplicate check code within one filter stage', () => {
 		// The whole site (both checks, not just the second/duplicate one) is left
 		// uninstrumented -- source untouched, no manifest entries at all for this file.
 		expect(result.code).toBe(source);
-		expect(result.manifest).toEqual({ stages: [], checks: [] });
+		expect(result.manifest).toEqual({ stages: [], checks: [], assets: [], entityKinds: [] });
 	});
 });
 

@@ -45,7 +45,7 @@ describe('compileTrace on the demo-geometry fixture', () => {
 		expect(code).toContain('import * as __toph from "toph";');
 		expect(code).toContain(`const __toph_s${stage.id} = __toph.enterStage(${stage.id});`);
 		expect(code).toContain('const survivors = components.filter((component) => {');
-		expect(code).toContain(`const __toph_e = __toph.enterElement(__toph_s${stage.id});`);
+		expect(code).toContain(`const __toph_e = __toph.enterElement(__toph_s${stage.id}, component);`);
 
 		// Each check call: elementId, checkId, then the two original sub-expressions in
 		// their original left/right order, each appearing exactly once.
@@ -79,7 +79,7 @@ describe('compileTrace on the demo-geometry fixture', () => {
 		const source = 'export const x = 1;\n';
 		const result = compileTrace('empty.ts', source, createIdAllocator());
 		expect(result.diagnostics).toEqual([]);
-		expect(result.manifest).toEqual({ stages: [], checks: [] });
+		expect(result.manifest).toEqual({ stages: [], checks: [], assets: [], entityKinds: [] });
 		expect(result.code).toBe(source);
 		expect(result.code).not.toContain('toph');
 	});
@@ -111,7 +111,7 @@ describe('compileTrace on the demo-geometry fixture', () => {
 
 		// Invalid site: no instrumentation, no import, original text untouched.
 		expect(result.code).toBe(source);
-		expect(result.manifest).toEqual({ stages: [], checks: [] });
+		expect(result.manifest).toEqual({ stages: [], checks: [], assets: [], entityKinds: [] });
 	});
 });
 
@@ -196,10 +196,14 @@ describe('writeManifest', () => {
 		const fragmentA = {
 			stages: [{ id: 1, name: 'a', kind: 'filter' as const, source: { file: 'a.ts', line: 1 } }],
 			checks: [],
+			assets: [],
+			entityKinds: [],
 		};
 		const fragmentB = {
 			stages: [{ id: 2, name: 'b', kind: 'filter' as const, source: { file: 'b.ts', line: 1 } }],
 			checks: [],
+			assets: [],
+			entityKinds: [],
 		};
 		const { manifest } = writeManifest([fragmentA, fragmentB]);
 		expect(manifest.stages.map((s) => s.name)).toEqual(['a', 'b']);

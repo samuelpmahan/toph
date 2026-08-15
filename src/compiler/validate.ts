@@ -21,7 +21,15 @@
 import * as ts from 'typescript';
 import type { CompilerDiagnostic } from './types.js';
 import { diagnosticAtNode, diagnosticAtPos } from './diagnostics.js';
-import { findLeadingDirective, parseCheckArgs, parseFilterArgs } from './directives.js';
+import {
+	findLeadingDirective,
+	findLeadingDirectives,
+	parseCheckArgs,
+	parseEntitiesArgs,
+	parseFilterArgs,
+	parseSnapshotArgs,
+} from './directives.js';
+import type { DirectiveHit } from './directives.js';
 
 export interface CheckGroup {
 	code: string;
@@ -90,7 +98,7 @@ function unsupportedCheckExpressionMessage(code: string): string {
 	return `@toph check "${code}" is attached to an unsupported expression shape. Extract the condition into a named boolean comparison or use an explicit escape hatch.`;
 }
 
-function collectStatements(sourceFile: ts.SourceFile): ts.Statement[] {
+export function collectStatements(sourceFile: ts.SourceFile): ts.Statement[] {
 	const out: ts.Statement[] = [];
 	const visit = (node: ts.Node): void => {
 		if (ts.isStatement(node)) {
@@ -386,4 +394,146 @@ export function validateFile(sourceFile: ts.SourceFile): ValidateFileResult {
 	}
 
 	return { records, diagnostics };
+}
+
+// ---------------------------------------------------------------------------------
+// `@toph snapshot` / `@toph entities` directive sites.
+//
+// These are a separate, independent family from `@toph filter`/`@toph check` above:
+// they don't replace their host statement, they WRAP it (insert a call immediately
+// before and/or after, leaving the statement's own text untouched) -- see codegen.ts's
+// emitWrapSite. A single statement may carry both at once (a `@toph snapshot` and a
+// `@toph entities` directive on the same `const <ident> = <expr>;` declaration is the
+// task's own real-target shape), which is exactly why findLeadingDirectives (plural) is
+// needed here instead of findLeadingDirective.
+//
+// Because "snapshot"/"entities" are now recognized verbs in directives.ts's DIRECTIVE_RE,
+// validateFile's own TOPH105 stray-malformed-comment pass above never fires for a
+// statement whose only leading comment is a well-formed `@toph snapshot`/`@toph
+// entities` directive (it isn't "malformed" at the verb-parsing level) -- so there is no
+// double-diagnosis between that pass and this one. An args-shape violation for either
+// directive (e.g. the wrong number of tokens) is diagnosed here, as TOPH106/TOPH107
+// respectively, not TOPH105 -- unlike parseFilterArgs/parseCheckArgs's failures, which
+// (for historical Phase 1-4 reasons) reuse TOPH105. This phase's task spec calls for
+// dedicated codes instead.
+// ---------------------------------------------------------------------------------
+
+export interface ValidSnapshotSite {
+	node: ts.Statement;
+	assetName: string;
+	ref: string;
+	width: string;
+	height: string;
+	/** 1-indexed line of the annotated statement in the original source. */
+	sourceLine: number;
+}
+
+export type SnapshotSiteRecord = { valid: true; site: ValidSnapshotSite } | { valid: false };
+
+export interface ValidEntitiesSite {
+	node: ts.Statement;
+	kindName: string;
+	/** The `const <ident>` being declared -- the array `spawnEntities` iterates. */
+	resultIdent: string;
+	sourceLine: number;
+}
+
+export type EntitiesSiteRecord = { valid: true; site: ValidEntitiesSite } | { valid: false };
+
+export interface ValidateAssetsAndEntitiesResult {
+	snapshotRecords: SnapshotSiteRecord[];
+	entitiesRecords: EntitiesSiteRecord[];
+	diagnostics: CompilerDiagnostic[];
+}
+
+function validateSnapshotSite(
+	sourceFile: ts.SourceFile,
+	node: ts.Statement,
+	hit: DirectiveHit,
+	diagnostics: CompilerDiagnostic[]
+): ValidSnapshotSite | null {
+	const parsed = parseSnapshotArgs(hit.directive.args);
+	if (parsed === null) {
+		diagnostics.push(
+			diagnosticAtPos(
+				'TOPH106',
+				`Directive "@toph snapshot ${hit.directive.args}" does not parse as "@toph snapshot <assetName> kind=mask ref=<ident> width=<ident> height=<ident>".`,
+				sourceFile,
+				hit.range.pos
+			)
+		);
+		return null;
+	}
+
+	const sourceLine = lineOf(sourceFile, node.getStart(sourceFile));
+	return { node, assetName: parsed.assetName, ref: parsed.ref, width: parsed.width, height: parsed.height, sourceLine };
+}
+
+function validateEntitiesSite(
+	sourceFile: ts.SourceFile,
+	node: ts.Statement,
+	hit: DirectiveHit,
+	diagnostics: CompilerDiagnostic[]
+): ValidEntitiesSite | null {
+	const kindName = parseEntitiesArgs(hit.directive.args);
+	if (kindName === null) {
+		diagnostics.push(
+			diagnosticAtPos(
+				'TOPH107',
+				`Directive "@toph entities ${hit.directive.args}" does not parse as "@toph entities <kind>".`,
+				sourceFile,
+				hit.range.pos
+			)
+		);
+		return null;
+	}
+
+	const shapeError = `@toph entities "${kindName}" must be attached to a "const <ident> = <expr>;" statement.`;
+	if (!ts.isVariableStatement(node)) {
+		diagnostics.push(diagnosticAtNode('TOPH107', shapeError, sourceFile, node));
+		return null;
+	}
+	const declList = node.declarationList;
+	if (!(declList.flags & ts.NodeFlags.Const) || declList.declarations.length !== 1) {
+		diagnostics.push(diagnosticAtNode('TOPH107', shapeError, sourceFile, node));
+		return null;
+	}
+	const decl = declList.declarations[0];
+	if (!ts.isIdentifier(decl.name) || !decl.initializer) {
+		diagnostics.push(diagnosticAtNode('TOPH107', shapeError, sourceFile, node));
+		return null;
+	}
+
+	const sourceLine = lineOf(sourceFile, node.getStart(sourceFile));
+	return { node, kindName, resultIdent: decl.name.text, sourceLine };
+}
+
+/**
+ * Validates every `@toph snapshot` / `@toph entities` directive site in a parsed source
+ * file, independent of (and in addition to) validateFile's `@toph filter`/`@toph check`
+ * handling above. Scans every statement in the file (not just top-level ones, mirroring
+ * validateFile's own collectStatements traversal) since the real target shape these
+ * directives exist for lives inside a function body, not at module top level.
+ */
+export function validateAssetsAndEntities(sourceFile: ts.SourceFile): ValidateAssetsAndEntitiesResult {
+	const diagnostics: CompilerDiagnostic[] = [];
+	const snapshotRecords: SnapshotSiteRecord[] = [];
+	const entitiesRecords: EntitiesSiteRecord[] = [];
+	const allStatements = collectStatements(sourceFile);
+
+	for (const stmt of allStatements) {
+		const hits = findLeadingDirectives(sourceFile, stmt);
+		for (const hit of hits) {
+			if (hit.kind !== 'parsed') continue;
+			if (hit.directive.verb === 'snapshot') {
+				const site = validateSnapshotSite(sourceFile, stmt, hit, diagnostics);
+				snapshotRecords.push(site ? { valid: true, site } : { valid: false });
+			} else if (hit.directive.verb === 'entities') {
+				const site = validateEntitiesSite(sourceFile, stmt, hit, diagnostics);
+				entitiesRecords.push(site ? { valid: true, site } : { valid: false });
+			}
+		}
+	}
+
+	return { snapshotRecords, entitiesRecords, diagnostics };
 }

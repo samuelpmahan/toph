@@ -3,34 +3,49 @@
 
 import * as ts from 'typescript';
 import type {
+	AssetManifestEntry,
 	CheckManifestEntry,
 	CompileResult,
 	CompilerDiagnostic,
+	EntityKindManifestEntry,
 	IdAllocator,
+	InternalAssetManifestEntry,
 	InternalCheckManifestEntry,
+	InternalEntityKindManifestEntry,
 	InternalStageManifestEntry,
 	ManifestFragment,
 	StageManifestEntry,
 } from './types.js';
-import { validateFile } from './validate.js';
+import { validateFile, validateAssetsAndEntities } from './validate.js';
 import { generateTraceCode } from './codegen.js';
 
 export type {
 	SourceLocation,
 	StageManifestEntry,
 	CheckManifestEntry,
+	AssetManifestEntry,
+	EntityKindManifestEntry,
 	ManifestFragment,
 	CompilerDiagnostic,
 	CompileResult,
 	IdAllocator,
 } from './types.js';
 
-export function createIdAllocator(startStageId = 1, startCheckId = 1): IdAllocator {
+export function createIdAllocator(
+	startStageId = 1,
+	startCheckId = 1,
+	startAssetId = 1,
+	startEntityKindId = 1
+): IdAllocator {
 	let nextStage = startStageId;
 	let nextCheck = startCheckId;
+	let nextAsset = startAssetId;
+	let nextEntityKind = startEntityKindId;
 	return {
 		nextStageId: () => nextStage++,
 		nextCheckId: () => nextCheck++,
+		nextAssetId: () => nextAsset++,
+		nextEntityKindId: () => nextEntityKind++,
 	};
 }
 
@@ -47,9 +62,14 @@ function parse(fileName: string, source: string): ts.SourceFile {
  */
 export function compileTrace(fileName: string, source: string, ids: IdAllocator): CompileResult {
 	const sourceFile = parse(fileName, source);
-	const { records, diagnostics } = validateFile(sourceFile);
-	const { code, manifest } = generateTraceCode(fileName, source, records, ids);
-	return { code, manifest, diagnostics };
+	const { records, diagnostics: filterDiagnostics } = validateFile(sourceFile);
+	const {
+		snapshotRecords,
+		entitiesRecords,
+		diagnostics: assetDiagnostics,
+	} = validateAssetsAndEntities(sourceFile);
+	const { code, manifest } = generateTraceCode(fileName, source, records, snapshotRecords, entitiesRecords, ids);
+	return { code, manifest, diagnostics: [...filterDiagnostics, ...assetDiagnostics] };
 }
 
 /**
@@ -61,8 +81,9 @@ export function compileTrace(fileName: string, source: string, ids: IdAllocator)
  */
 export function compileProduction(fileName: string, source: string): { code: string; diagnostics: CompilerDiagnostic[] } {
 	const sourceFile = parse(fileName, source);
-	const { diagnostics } = validateFile(sourceFile);
-	return { code: source, diagnostics };
+	const { diagnostics: filterDiagnostics } = validateFile(sourceFile);
+	const { diagnostics: assetDiagnostics } = validateAssetsAndEntities(sourceFile);
+	return { code: source, diagnostics: [...filterDiagnostics, ...assetDiagnostics] };
 }
 
 /**
@@ -73,11 +94,18 @@ export function compileProduction(fileName: string, source: string): { code: str
  * contributes to one manifest).
  */
 export function writeManifest(fragments: ManifestFragment[]): {
-	manifest: { stages: StageManifestEntry[]; checks: CheckManifestEntry[] };
+	manifest: {
+		stages: StageManifestEntry[];
+		checks: CheckManifestEntry[];
+		assets: AssetManifestEntry[];
+		entityKinds: EntityKindManifestEntry[];
+	};
 	sourceMap: Array<{ generatedFile: string; generatedLine: number; file: string; line: number }>;
 } {
 	const stages: StageManifestEntry[] = [];
 	const checks: CheckManifestEntry[] = [];
+	const assets: AssetManifestEntry[] = [];
+	const entityKinds: EntityKindManifestEntry[] = [];
 	const sourceMap: Array<{ generatedFile: string; generatedLine: number; file: string; line: number }> = [];
 
 	for (const fragment of fragments) {
@@ -110,7 +138,27 @@ export function writeManifest(fragments: ManifestFragment[]): {
 				line: check.source.line,
 			});
 		}
+		for (const asset of fragment.assets) {
+			assets.push({ id: asset.id, name: asset.name, kind: asset.kind, source: asset.source });
+			const ext = asset as Partial<InternalAssetManifestEntry>;
+			sourceMap.push({
+				generatedFile: ext.generatedFile ?? asset.source.file,
+				generatedLine: ext.generatedLine ?? 0,
+				file: asset.source.file,
+				line: asset.source.line,
+			});
+		}
+		for (const entityKind of fragment.entityKinds) {
+			entityKinds.push({ id: entityKind.id, name: entityKind.name, source: entityKind.source });
+			const ext = entityKind as Partial<InternalEntityKindManifestEntry>;
+			sourceMap.push({
+				generatedFile: ext.generatedFile ?? entityKind.source.file,
+				generatedLine: ext.generatedLine ?? 0,
+				file: entityKind.source.file,
+				line: entityKind.source.line,
+			});
+		}
 	}
 
-	return { manifest: { stages, checks }, sourceMap };
+	return { manifest: { stages, checks, assets, entityKinds }, sourceMap };
 }

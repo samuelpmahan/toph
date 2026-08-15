@@ -7,7 +7,7 @@
 
 import * as ts from 'typescript';
 
-export type DirectiveVerb = 'filter' | 'check';
+export type DirectiveVerb = 'filter' | 'check' | 'snapshot' | 'entities';
 
 export interface ParsedDirective {
 	verb: DirectiveVerb;
@@ -30,7 +30,7 @@ export interface MalformedDirectiveHit {
 	text: string;
 }
 
-const DIRECTIVE_RE = /^\s*\*?\s*@toph\s+(filter|check)\b(.*)$/m;
+const DIRECTIVE_RE = /^\s*\*?\s*@toph\s+(filter|check|snapshot|entities)\b(.*)$/m;
 
 /**
  * Strips the surrounding comment delimiters (/* ... *\/ or // ...) from a raw comment
@@ -87,6 +87,38 @@ export function findLeadingDirective(
 	return null;
 }
 
+/**
+ * Like findLeadingDirective, but returns EVERY @toph-directive-shaped leading comment
+ * attached to `node` (in source order), not just the first. Needed for directive kinds
+ * that can legitimately co-occur on the same statement -- e.g. a `@toph snapshot` and a
+ * `@toph entities` directive both attached to the same `const <ident> = <expr>;`
+ * declaration (see src/compiler/index.ts's asset/entity validation), which fire at
+ * different points relative to that one statement rather than competing for the same
+ * slot the way `@toph filter` does.
+ *
+ * findLeadingDirective itself is left untouched and still used as-is by the existing
+ * `@toph filter`/`@toph check` code paths in validate.ts, which only ever need "the
+ * first directive-shaped comment" and must keep behaving exactly as before.
+ */
+export function findLeadingDirectives(
+	sourceFile: ts.SourceFile,
+	node: ts.Node
+): Array<DirectiveHit | MalformedDirectiveHit> {
+	const ranges = ts.getLeadingCommentRanges(sourceFile.text, node.getFullStart()) ?? [];
+	const hits: Array<DirectiveHit | MalformedDirectiveHit> = [];
+	for (const range of ranges) {
+		const body = stripCommentDelimiters(sourceFile.text, range);
+		const result = tryParseDirectiveBody(body);
+		if (result === null) continue;
+		if (result === 'malformed') {
+			hits.push({ kind: 'malformed', range, text: body.trim() });
+		} else {
+			hits.push({ kind: 'parsed', range, directive: result });
+		}
+	}
+	return hits;
+}
+
 /** Parsed `@toph check <code> [unit=<unit>]` arguments. */
 export interface ParsedCheckArgs {
 	code: string;
@@ -108,12 +140,64 @@ export function parseCheckArgs(args: string): ParsedCheckArgs | null {
 	return { code, unit: unitMatch[1] };
 }
 
+function singleToken(args: string): string | null {
+	const tokens = args.split(/\s+/).filter((t) => t.length > 0);
+	if (tokens.length !== 1) return null;
+	return tokens[0];
+}
+
 /**
  * Parses the args portion of a `@toph filter` directive ("demo.geometry"). Returns
  * null if the args aren't exactly one whitespace-free token.
  */
 export function parseFilterArgs(args: string): string | null {
+	return singleToken(args);
+}
+
+/**
+ * Parses the args portion of a `@toph entities` directive ("component"). Same shape as
+ * `@toph filter`'s args (exactly one whitespace-free token, the entity kind name) --
+ * kept as a distinct function (rather than reusing parseFilterArgs directly at call
+ * sites) so each directive's own validator reads as validating its own grammar, not
+ * borrowing another directive's.
+ */
+export function parseEntitiesArgs(args: string): string | null {
+	return singleToken(args);
+}
+
+const SNAPSHOT_IDENT_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
+/** Parsed `@toph snapshot <assetName> kind=mask ref=<ident> width=<ident> height=<ident>` arguments. */
+export interface ParsedSnapshotArgs {
+	assetName: string;
+	kind: 'mask';
+	ref: string;
+	width: string;
+	height: string;
+}
+
+/**
+ * Parses the args portion of a `@toph snapshot` directive. Returns null unless the args
+ * are exactly five whitespace-separated tokens: `<assetName> kind=mask ref=<ident>
+ * width=<ident> height=<ident>`, where each `<ident>` is a plain JS identifier (these
+ * are spliced directly into generated code as expressions, so they're restricted to
+ * identifier text, not arbitrary sub-expressions). `kind=mask` is currently the only
+ * supported kind -- a `kind=` value other than `mask` does not parse, rather than being
+ * silently accepted as some other (unimplemented) asset kind.
+ */
+export function parseSnapshotArgs(args: string): ParsedSnapshotArgs | null {
 	const tokens = args.split(/\s+/).filter((t) => t.length > 0);
-	if (tokens.length !== 1) return null;
-	return tokens[0];
+	if (tokens.length !== 5) return null;
+	const [assetName, kindToken, refToken, widthToken, heightToken] = tokens;
+	if (kindToken !== 'kind=mask') return null;
+
+	const refMatch = /^ref=(.+)$/.exec(refToken);
+	const widthMatch = /^width=(.+)$/.exec(widthToken);
+	const heightMatch = /^height=(.+)$/.exec(heightToken);
+	if (!refMatch || !widthMatch || !heightMatch) return null;
+	if (!SNAPSHOT_IDENT_RE.test(refMatch[1])) return null;
+	if (!SNAPSHOT_IDENT_RE.test(widthMatch[1])) return null;
+	if (!SNAPSHOT_IDENT_RE.test(heightMatch[1])) return null;
+
+	return { assetName, kind: 'mask', ref: refMatch[1], width: widthMatch[1], height: heightMatch[1] };
 }
