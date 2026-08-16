@@ -1,63 +1,87 @@
 [
   {
     "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "generatedLine": 338,
+    "generatedLine": 332,
     "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "line": 337
+    "line": 331
   },
   {
     "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "generatedLine": 359,
-    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "line": 366
-  },
-  {
-    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "generatedLine": 341,
-    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "line": 339
-  },
-  {
-    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "generatedLine": 343,
-    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "line": 342
-  },
-  {
-    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "generatedLine": 345,
+    "generatedLine": 344,
     "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
     "line": 345
   },
   {
     "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "generatedLine": 365,
+    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "line": 374
+  },
+  {
+    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "generatedLine": 335,
+    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "line": 333
+  },
+  {
+    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "generatedLine": 337,
+    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "line": 336
+  },
+  {
+    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "generatedLine": 339,
+    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "line": 339
+  },
+  {
+    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
     "generatedLine": 347,
     "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "line": 348
+    "line": 347
   },
   {
     "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
     "generatedLine": 349,
     "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "line": 351
+    "line": 350
   },
   {
     "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "generatedLine": 352,
+    "generatedLine": 351,
     "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "line": 357
+    "line": 353
   },
   {
     "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "generatedLine": 354,
+    "generatedLine": 353,
     "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "line": 360
+    "line": 356
   },
   {
     "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "generatedLine": 362,
+    "generatedLine": 355,
+    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "line": 359
+  },
+  {
+    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "generatedLine": 358,
+    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "line": 365
+  },
+  {
+    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "generatedLine": 360,
     "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
     "line": 368
+  },
+  {
+    "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "generatedLine": 368,
+    "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+    "line": 376
   },
   {
     "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
@@ -73,8 +97,8 @@
   },
   {
     "generatedFile": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "generatedLine": 387,
+    "generatedLine": 393,
     "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-    "line": 384
+    "line": 392
   }
 ]

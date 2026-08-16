@@ -61,17 +61,14 @@
  	const brightComponents = collectComponents(bright, width, height, queue);
  	const darkComponents = collectComponents(dark, width, height, queue);
  
-@@ -321,36 +327,60 @@
+@@ -321,36 +327,68 @@
  		const maxY = Math.min(height - 1, badgeMaxY + verticalMargin);
  		const badgeOverlapMargin = Math.max(2, badgeMedianHeight * 0.08);
  
 -		teeComponents = brightComponents.filter((component) => {
-+		const geometryPool = brightComponents.filter((component) => {
- 			if (component.centroidY < minY || component.centroidY > maxY) return false;
- 			if (centerFallsInsideBadge(component, badgeComponents, badgeOverlapMargin)) return false;
-+			return true;
-+		});
- 
+-			if (component.centroidY < minY || component.centroidY > maxY) return false;
+-			if (centerFallsInsideBadge(component, badgeComponents, badgeOverlapMargin)) return false;
+-
 -			const minDimension = Math.min(component.widthPx, component.heightPx);
 -			const maxDimension = Math.max(component.widthPx, component.heightPx);
 -			const bboxAspect = maxDimension / Math.max(1, minDimension);
@@ -85,6 +82,29 @@
 -				component.fill >= 0.12 &&
 -				component.fill <= 0.55
 -			);
++		/** @toph filter p1.tee.prefilter */
++		const geometryPool = brightComponents.filter((component) => {
++			/** @toph check centroid-y.min unit=px */
++			const centroidYMinOk = component.centroidY >= minY;
++			if (!centroidYMinOk) return false;
++			/** @toph check centroid-y.max unit=px */
++			const centroidYMaxOk = component.centroidY <= maxY;
++			if (!centroidYMaxOk) return false;
++			/** @toph check badge-overlap */
++			const badgeOverlapOk = centerFallsInsideBadge(component, badgeComponents, badgeOverlapMargin) === false;
++			if (!badgeOverlapOk) return false;
++			return true;
+ 		});
+ 
+-		teeComponents = teeComponents.filter((component) =>
+-			passesTeeAppearanceCheck(raster, {
+-				xPx: component.centroidX,
+-				yPx: component.centroidY,
+-				orientationDeg: component.orientationDeg,
+-				widthPx: component.widthPx,
+-				heightPx: component.heightPx
+-			})
+-		);
 +		/** @toph filter p1.tee.geometry */
 +		teeComponents = geometryPool.filter((component) => {
 +			/** @toph check area.min unit=px2 */
@@ -112,17 +132,8 @@
 +			const fillMaxOk = component.fill <= 0.55;
 +			if (!fillMaxOk) return false;
 +			return true;
- 		});
- 
--		teeComponents = teeComponents.filter((component) =>
--			passesTeeAppearanceCheck(raster, {
--				xPx: component.centroidX,
--				yPx: component.centroidY,
--				orientationDeg: component.orientationDeg,
--				widthPx: component.widthPx,
--				heightPx: component.heightPx
--			})
--		);
++		});
++
 +		/** @toph filter p1.tee.appearance */
 +		teeComponents = teeComponents.filter((component) => {
 +			/** @toph check appearance.ncc */

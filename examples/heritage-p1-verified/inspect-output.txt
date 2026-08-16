@@ -5,8 +5,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.06px
+  method: nearest-pixel
+  distance: 2.94px
   component entity: 1263
   attrs:
     minX: 18
@@ -21,9 +21,16 @@ Correspondence:
     orientationDeg: 1.0598587462330897
     fill: 0.7556818181818182
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         133 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1613.954887218045 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1613.954887218045 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         133 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -37,8 +44,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.29px
+  method: nearest-pixel
+  distance: 3.00px
   component entity: 1237
   attrs:
     minX: 387
@@ -53,9 +60,16 @@ Correspondence:
     orientationDeg: 26.429974413128292
     fill: 0.4756944444444444
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         137 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1531.6934306569342 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1531.6934306569342 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         137 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -69,8 +83,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.08px
+  method: nearest-pixel
+  distance: 3.03px
   component entity: 1242
   attrs:
     minX: 573
@@ -85,9 +99,16 @@ Correspondence:
     orientationDeg: 8.676848593767943
     fill: 0.5576923076923077
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         116 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1536.0603448275863 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1536.0603448275863 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         116 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -101,8 +122,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.22px
+  method: nearest-pixel
+  distance: 2.72px
   component entity: 1202
   attrs:
     minX: 702
@@ -117,9 +138,16 @@ Correspondence:
     orientationDeg: 100.0438695581755
     fill: 0.5158730158730159
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         130 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1396.5384615384614 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1396.5384615384614 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         130 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -133,8 +161,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.23px
+  method: nearest-pixel
+  distance: 2.77px
   component entity: 495
   attrs:
     minX: 863
@@ -149,9 +177,16 @@ Correspondence:
     orientationDeg: 167.70559822904957
     fill: 0.5168067226890757
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         123 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   715.5040650406504 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   715.5040650406504 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         123 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -165,8 +200,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.05px
+  method: nearest-pixel
+  distance: 3.01px
   component entity: 550
   attrs:
     minX: 1022
@@ -181,9 +216,16 @@ Correspondence:
     orientationDeg: 80.61719949185425
     fill: 0.4925925925925926
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         133 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   745.3157894736842 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   745.3157894736842 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         133 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -197,8 +239,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.19px
+  method: nearest-pixel
+  distance: 2.73px
   component entity: 906
   attrs:
     minX: 1087
@@ -213,9 +255,16 @@ Correspondence:
     orientationDeg: 113.84704738930245
     fill: 0.4548611111111111
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         131 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1049.526717557252 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1049.526717557252 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         131 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -229,8 +278,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.21px
+  method: nearest-pixel
+  distance: 2.97px
   component entity: 673
   attrs:
     minX: 876
@@ -245,9 +294,16 @@ Correspondence:
     orientationDeg: 104.35697562264137
     fill: 0.4801587301587302
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         121 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   852.595041322314 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   852.595041322314 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         121 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -261,8 +317,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.24px
+  method: nearest-pixel
+  distance: 2.90px
   component entity: 1036
   attrs:
     minX: 792
@@ -277,9 +333,16 @@ Correspondence:
     orientationDeg: 98.6500648337023
     fill: 0.5610859728506787
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         124 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1153.741935483871 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1153.741935483871 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         124 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -293,8 +356,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.09px
+  method: nearest-pixel
+  distance: 2.94px
   component entity: 1195
   attrs:
     minX: 824
@@ -309,9 +372,16 @@ Correspondence:
     orientationDeg: 86.29570467142321
     fill: 0.6354166666666666
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         122 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1350.549180327869 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1350.549180327869 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         122 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -325,8 +395,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.12px
+  method: nearest-pixel
+  distance: 3.12px
   component entity: 1224
   attrs:
     minX: 949
@@ -341,9 +411,16 @@ Correspondence:
     orientationDeg: 16.71843335310976
     fill: 0.5
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         119 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1486.563025210084 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1486.563025210084 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         119 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -357,11 +434,31 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 30.38px
-  No corresponding component found.
+  method: nearest-pixel
+  distance: 1.62px
+  component entity: 1233
+  attrs:
+    minX: 1172
+    minY: 1509
+    maxX: 1231
+    maxY: 1562
+    widthPx: 60
+    heightPx: 54
+    areaPx: 551
+    centroidX: 1202.8620689655172
+    centroidY: 1536.89110707804
+    orientationDeg: 146.82990351844882
+    fill: 0.17006172839506173
 
-Downstream: The nearest entity (id 1233) is 30.38px away, beyond the reliable-match threshold -- not treated as a corresponding component, so no stage breakdown was computed.
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
+  Checks executed (in order):
+    centroid-y.min   1536.89110707804 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1536.89110707804 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    true eq false  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: badge-overlap
+  Kept: false
+
+Downstream: This component was rejected at "badge-overlap" in stage "p1.tee.prefilter" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
 
 === H16 ===
 Ground truth: H16 at (1005.1, 1567.4) (expect: tee)
@@ -370,8 +467,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.13px
+  method: nearest-pixel
+  distance: 2.64px
   component entity: 1250
   attrs:
     minX: 997
@@ -386,9 +483,16 @@ Correspondence:
     orientationDeg: 157.94510095957875
     fill: 0.4375
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         126 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1567.2936507936508 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1567.2936507936508 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         126 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -402,8 +506,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.46px
+  method: nearest-pixel
+  distance: 2.90px
   component entity: 1269
   attrs:
     minX: 677
@@ -418,9 +522,16 @@ Correspondence:
     orientationDeg: 0.5991434002312701
     fill: 0.7386363636363636
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         130 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1632.9846153846154 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1632.9846153846154 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         130 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false
@@ -434,8 +545,8 @@ White-mask support:
   No bright pixel exactly at the truth point.
 
 Correspondence:
-  method: nearest-centroid
-  distance: 0.14px
+  method: nearest-pixel
+  distance: 3.42px
   component entity: 1223
   attrs:
     minX: 342
@@ -450,9 +561,16 @@ Correspondence:
     orientationDeg: 178.518116529277
     fill: 0.7239583333333334
 
-Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+Stage: p1.tee.prefilter  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:331)
   Checks executed (in order):
-    area.min         139 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+    centroid-y.min   1479.5395683453237 px gte 560.67277486911 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:333)
+    centroid-y.max   1479.5395683453237 px lte 1773.7256011315417 px  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:336)
+    badge-overlap    false eq false  [PASS]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  Kept: true
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:345)
+  Checks executed (in order):
+    area.min         139 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:347)
   First failing check: area.min
   Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
   Kept: false

@@ -2,20 +2,29 @@
   "stages": [
     {
       "id": 1,
-      "name": "p1.tee.geometry",
+      "name": "p1.tee.prefilter",
       "kind": "filter",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 337
+        "line": 331
       }
     },
     {
       "id": 2,
+      "name": "p1.tee.geometry",
+      "kind": "filter",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 345
+      }
+    },
+    {
+      "id": 3,
       "name": "p1.tee.appearance",
       "kind": "filter",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 366
+        "line": 374
       }
     }
   ],
@@ -23,85 +32,117 @@
     {
       "id": 1,
       "stageId": 1,
-      "code": "area.min",
+      "code": "centroid-y.min",
       "operator": ">=",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 339
+        "line": 333
       },
-      "unit": "px2"
+      "unit": "px"
     },
     {
       "id": 2,
       "stageId": 1,
-      "code": "area.max",
+      "code": "centroid-y.max",
       "operator": "<=",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 342
+        "line": 336
       },
-      "unit": "px2"
+      "unit": "px"
     },
     {
       "id": 3,
       "stageId": 1,
+      "code": "badge-overlap",
+      "operator": "===",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 339
+      }
+    },
+    {
+      "id": 4,
+      "stageId": 2,
+      "code": "area.min",
+      "operator": ">=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 347
+      },
+      "unit": "px2"
+    },
+    {
+      "id": 5,
+      "stageId": 2,
+      "code": "area.max",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 350
+      },
+      "unit": "px2"
+    },
+    {
+      "id": 6,
+      "stageId": 2,
       "code": "min-dimension",
       "operator": ">=",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 345
+        "line": 353
       },
       "unit": "px"
     },
     {
-      "id": 4,
-      "stageId": 1,
+      "id": 7,
+      "stageId": 2,
       "code": "max-dimension",
       "operator": "<=",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 348
+        "line": 356
       },
       "unit": "px"
     },
     {
-      "id": 5,
-      "stageId": 1,
+      "id": 8,
+      "stageId": 2,
       "code": "bbox-aspect.max",
       "operator": "<=",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 351
+        "line": 359
       }
     },
     {
-      "id": 6,
-      "stageId": 1,
+      "id": 9,
+      "stageId": 2,
       "code": "fill.min",
       "operator": ">=",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 357
+        "line": 365
       }
     },
     {
-      "id": 7,
-      "stageId": 1,
+      "id": 10,
+      "stageId": 2,
       "code": "fill.max",
       "operator": "<=",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 360
+        "line": 368
       }
     },
     {
-      "id": 8,
-      "stageId": 2,
+      "id": 11,
+      "stageId": 3,
       "code": "appearance.ncc",
       "operator": ">=",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 368
+        "line": 376
       }
     }
   ],
@@ -130,7 +171,7 @@
       "name": "tee",
       "source": {
         "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
-        "line": 384
+        "line": 392
       }
     }
   ]
