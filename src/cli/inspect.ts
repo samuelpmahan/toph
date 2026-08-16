@@ -62,8 +62,12 @@ export interface Correspondence {
 export interface ExecutedCheck {
 	code: string;
 	operator: string;
-	value: number;
-	threshold: number;
+	/** `number | boolean` -- a pure passthrough of CheckRecord.value/threshold
+	 * (src/runtime/index.ts), which is boolean-valued for eq/neq checks compiled from a
+	 * boolean `===`/`!==` comparison. No arithmetic is ever performed on these fields
+	 * here, only display. */
+	value: number | boolean;
+	threshold: number | boolean;
 	unit?: string;
 	pass: boolean;
 	source: { file: string; line: number };

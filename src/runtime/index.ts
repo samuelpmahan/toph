@@ -59,14 +59,17 @@ export interface ElementRecord {
 
 /** One executed comparison. Pushed in call order -- this ordering is itself evidence of
  * which checks ran, in what sequence, and (via a missing subsequent record for the same
- * elementId) which one short-circuited the rest. */
+ * elementId) which one short-circuited the rest.
+ *
+ * `value`/`threshold` are `number | boolean` because `eq`/`neq` (unlike the other four
+ * comparators) are meaningful on booleans -- see makeCheck's doc comment. */
 export interface CheckRecord {
 	stageInvocationId: number;
 	elementId: number;
 	checkId: number;
 	operator: CheckOperator;
-	value: number;
-	threshold: number;
+	value: number | boolean;
+	threshold: number | boolean;
 	pass: boolean;
 }
 
@@ -316,8 +319,8 @@ function lookupElement(session: Session, fnName: string, elementId: number): Ele
 	return record;
 }
 
-function makeCheck(operator: CheckOperator, compare: (value: number, threshold: number) => boolean) {
-	return (elementId: number, checkId: number, value: number, threshold: number): boolean => {
+function makeCheck<T extends number | boolean>(operator: CheckOperator, compare: (value: T, threshold: T) => boolean) {
+	return (elementId: number, checkId: number, value: T, threshold: T): boolean => {
 		const session = requireSession(operator);
 		const element = lookupElement(session, operator, elementId);
 		// Literal native comparison first (exactly `value <op> threshold`, including
@@ -338,12 +341,15 @@ function makeCheck(operator: CheckOperator, compare: (value: number, threshold: 
 	};
 }
 
-export const gte = makeCheck('gte', (value, threshold) => value >= threshold);
-export const lte = makeCheck('lte', (value, threshold) => value <= threshold);
-export const gt = makeCheck('gt', (value, threshold) => value > threshold);
-export const lt = makeCheck('lt', (value, threshold) => value < threshold);
-export const eq = makeCheck('eq', (value, threshold) => value === threshold);
-export const neq = makeCheck('neq', (value, threshold) => value !== threshold);
+export const gte = makeCheck<number>('gte', (value, threshold) => value >= threshold);
+export const lte = makeCheck<number>('lte', (value, threshold) => value <= threshold);
+export const gt = makeCheck<number>('gt', (value, threshold) => value > threshold);
+export const lt = makeCheck<number>('lt', (value, threshold) => value < threshold);
+// eq/neq are typed over `number | boolean` (unlike the other four) because `===`/`!==`
+// are sound, meaningful comparisons on booleans -- `>=`/`<=`/`>`/`<` are not, so those
+// stay number-only.
+export const eq = makeCheck<number | boolean>('eq', (value, threshold) => value === threshold);
+export const neq = makeCheck<number | boolean>('neq', (value, threshold) => value !== threshold);
 
 /** Marks an element as a survivor of its filter stage. This is the only explicit
  * "outcome" call generated code makes -- rejection is never recorded directly, it is

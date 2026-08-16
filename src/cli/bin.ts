@@ -29,7 +29,7 @@ function readJson<T>(path: string): T {
 	return JSON.parse(readFileSync(path, 'utf8')) as T;
 }
 
-function formatCheck(c: { code: string; operator: string; value: number; threshold: number; unit?: string; pass: boolean }): string {
+function formatCheck(c: { code: string; operator: string; value: number | boolean; threshold: number | boolean; unit?: string; pass: boolean }): string {
 	const unit = c.unit ? ` ${c.unit}` : '';
 	const mark = c.pass ? 'PASS' : 'FAIL';
 	return `    ${c.code.padEnd(16)} ${c.value}${unit} ${c.operator} ${c.threshold}${unit}  [${mark}]`;

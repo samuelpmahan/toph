@@ -238,6 +238,63 @@ describe('comparators', () => {
 	});
 });
 
+describe('eq/neq on boolean operands', () => {
+	let s: number;
+	let e: number;
+
+	beforeEach(() => {
+		toph.startTrace();
+		s = toph.enterStage(1);
+		e = toph.enterElement(s);
+	});
+
+	it('compares booleans with real === / !== semantics and records real boolean value/threshold in the CheckRecord', () => {
+		expect(toph.eq(e, 1, true, true)).toBe(true);
+		expect(toph.eq(e, 2, true, false)).toBe(false);
+		expect(toph.neq(e, 3, true, false)).toBe(true);
+		expect(toph.neq(e, 4, false, false)).toBe(false);
+		const run = toph.finishTrace();
+
+		expect(run.checks).toEqual([
+			{ stageInvocationId: s, elementId: e, checkId: 1, operator: 'eq', value: true, threshold: true, pass: true },
+			{ stageInvocationId: s, elementId: e, checkId: 2, operator: 'eq', value: true, threshold: false, pass: false },
+			{ stageInvocationId: s, elementId: e, checkId: 3, operator: 'neq', value: true, threshold: false, pass: true },
+			{ stageInvocationId: s, elementId: e, checkId: 4, operator: 'neq', value: false, threshold: false, pass: false },
+		]);
+		// The recorded value/threshold are real JS booleans, not stringified/coerced.
+		expect(typeof run.checks[0].value).toBe('boolean');
+		expect(typeof run.checks[0].threshold).toBe('boolean');
+	});
+
+	it('the returned TraceRun with boolean-valued checks is still trivially JSON-serializable', () => {
+		toph.eq(e, 1, true, false);
+		const run = toph.finishTrace();
+		expect(JSON.parse(JSON.stringify(run))).toEqual(run);
+	});
+
+	it('gte/lte/gt/lt reject boolean arguments at the TYPE level; eq/neq accept them -- checked by tsc, never executed at runtime', () => {
+		// This function is intentionally never called. Its only purpose is to be
+		// typechecked by `tsc --noEmit -p .` (vitest's own transform does not typecheck),
+		// proving gte/lte/gt/lt stayed strictly number-only (makeCheck<number>) while
+		// eq/neq were deliberately widened to makeCheck<number | boolean>. Referencing it
+		// via `typeof` below keeps it from being flagged as an unused declaration.
+		function typeOnlyChecks(): void {
+			// @ts-expect-error -- gte is number-only; a boolean value/threshold must be rejected.
+			toph.gte(1, 1, true, false);
+			// @ts-expect-error -- lte is number-only.
+			toph.lte(1, 1, true, false);
+			// @ts-expect-error -- gt is number-only.
+			toph.gt(1, 1, true, false);
+			// @ts-expect-error -- lt is number-only.
+			toph.lt(1, 1, true, false);
+			// No @ts-expect-error here: eq/neq must compile cleanly with boolean arguments.
+			toph.eq(1, 1, true, false);
+			toph.neq(1, 1, true, false);
+		}
+		expect(typeof typeOnlyChecks).toBe('function');
+	});
+});
+
 describe('keep', () => {
 	it('flips the kept flag of exactly the given element, leaving others untouched', () => {
 		toph.startTrace();
