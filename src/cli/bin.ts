@@ -5,7 +5,7 @@
 // testable function with no filesystem/process dependency.
 
 import { readFileSync } from 'node:fs';
-import { inspectTruth, type InspectReport } from './inspect.js';
+import { buildSurvivalFunnel, inspectTruth, type FunnelReport, type InspectReport } from './inspect.js';
 import type { LabelmapDocument } from './labelmap.js';
 
 function parseArgs(argv: string[]): Record<string, string> {
@@ -39,6 +39,12 @@ export function formatReport(report: InspectReport): string {
 	const lines: string[] = [];
 	lines.push(`Ground truth: ${report.truth.label} at (${report.truth.point.x}, ${report.truth.point.y})${report.truth.expect ? ` (expect: ${report.truth.expect})` : ''}`);
 	lines.push('');
+
+	if (report.ambiguous) {
+		lines.push(`${report.truth.label}: marked ambiguous -- ${report.ambiguous.reason} -- not resolved.`);
+		return lines.join('\n');
+	}
+
 	lines.push('White-mask support:');
 	if (report.whiteMaskSupport.directHit) {
 		lines.push(`  Direct hit -- bright pixel at the truth point, label ${report.whiteMaskSupport.labelAtPoint}.`);
@@ -78,16 +84,54 @@ export function formatReport(report: InspectReport): string {
 	return lines.join('\n');
 }
 
+/** Compact, skimmable summary for `buildSurvivalFunnel` -- a handful of lines, not a wall
+ * of JSON: total/confident/ambiguous/corresponded counts, one line per stage's
+ * reached/kept, then the materialized count. */
+export function formatFunnelReport(report: FunnelReport): string {
+	const lines: string[] = [];
+	lines.push(`Truth objects: ${report.totalTruthObjects} total (${report.confidentCount} confident, ${report.ambiguousCount} ambiguous)`);
+	lines.push(`Corresponded: ${report.correspondedCount} / ${report.confidentCount} confident`);
+	for (const stage of report.stages) {
+		lines.push(`  ${stage.stageName}: reached ${stage.reached}, kept ${stage.kept}`);
+	}
+	lines.push(`Materialized: ${report.materializedCount}`);
+	return lines.join('\n');
+}
+
+const USAGE =
+	'Usage:\n' +
+	'  toph inspect --trace <trace.json> --manifest <manifest.json> --labelmap <labelmap.json> --truth <truth.json> --point <label>\n' +
+	'  toph inspect --trace <trace.json> --manifest <manifest.json> --labelmap <labelmap.json> --truth <truth.json> --stages <name,name,...> [--max-distance <px>]';
+
 function main(): void {
-	const args = parseArgs(process.argv.slice(3)); // skip "node", "bin.js", "inspect"
 	const command = process.argv[2];
 	if (command !== 'inspect') {
-		console.error('Usage: toph inspect --trace <trace.json> --manifest <manifest.json> --labelmap <labelmap.json> --truth <truth.json> --point <label>');
+		console.error(USAGE);
 		process.exit(1);
 	}
-	for (const required of ['trace', 'manifest', 'labelmap', 'truth', 'point']) {
+
+	const args = parseArgs(process.argv.slice(3)); // skip "node", "bin.js", "inspect"
+
+	for (const required of ['trace', 'manifest', 'labelmap', 'truth']) {
 		if (!args[required]) {
 			console.error(`toph inspect: missing required --${required}`);
+			process.exit(1);
+		}
+	}
+	if (!args.point && !args.stages) {
+		console.error('toph inspect: supply either --point <label> (single-point query) or --stages <name,name,...> (fixture-wide survival funnel).\n\n' + USAGE);
+		process.exit(1);
+	}
+	if (args.point && args.stages) {
+		console.error('toph inspect: --point and --stages are mutually exclusive -- pass one or the other.');
+		process.exit(1);
+	}
+
+	let maxCorrespondenceDistancePx: number | undefined;
+	if (args['max-distance'] !== undefined) {
+		maxCorrespondenceDistancePx = Number(args['max-distance']);
+		if (Number.isNaN(maxCorrespondenceDistancePx)) {
+			console.error(`toph inspect: --max-distance must be a number, got "${args['max-distance']}"`);
 			process.exit(1);
 		}
 	}
@@ -97,15 +141,32 @@ function main(): void {
 	const labelmapDoc = readJson<LabelmapDocument>(args.labelmap);
 	const truth = readJson(args.truth);
 
-	const report = inspectTruth({
-		truthLabel: args.point,
+	if (args.point) {
+		const report = inspectTruth({
+			truthLabel: args.point,
+			truth: truth as any,
+			trace: trace as any,
+			manifest: manifest as any,
+			labelmapDoc,
+			maxCorrespondenceDistancePx,
+		});
+		console.log(formatReport(report));
+		return;
+	}
+
+	const stageOrder = args.stages
+		.split(',')
+		.map((s) => s.trim())
+		.filter((s) => s.length > 0);
+	const funnel = buildSurvivalFunnel({
 		truth: truth as any,
 		trace: trace as any,
 		manifest: manifest as any,
 		labelmapDoc,
+		stageOrder,
+		maxCorrespondenceDistancePx,
 	});
-
-	console.log(formatReport(report));
+	console.log(formatFunnelReport(funnel));
 }
 
 main();

@@ -21,6 +21,14 @@ export interface TruthObject {
 	label: string;
 	point: { x: number; y: number };
 	expect?: string;
+	/** Absent/undefined means 'confident' -- this keeps every pre-existing truth.json
+	 * (e.g. examples/heritage-first-loss/truth.json, which has no `status` field at all)
+	 * parsing and behaving exactly as before. 'ambiguous' means the ground-truth author
+	 * could not reliably pin this point down (e.g. a visually-merged glyph) and
+	 * inspectTruth must not attempt any correspondence guess for it -- see `reason`. */
+	status?: 'confident' | 'ambiguous';
+	/** Human-readable explanation, present when status === 'ambiguous'. */
+	reason?: string;
 }
 
 export interface TruthDocument {
@@ -34,10 +42,19 @@ export interface WhiteMaskSupport {
 	labelAtPoint: number;
 }
 
+/** DEFAULT_MAX_CORRESPONDENCE_DISTANCE_PX's rationale lives on that constant, just below --
+ * `reliable` mirrors the same judgment as a boolean so callers don't have to re-derive it
+ * from `distancePx`/`method` themselves. Direct pixel hits are always reliable (distance 0,
+ * unambiguous by construction -- the truth point landed exactly on a labeled pixel, there is
+ * no "nearest" guess involved). A nearest-centroid match is reliable only when its distance
+ * is within the caller's threshold; beyond that it is still reported honestly (method,
+ * distance, and entityId are never hidden or nulled out) but callers should treat it as "no
+ * dependable correspondence," the same as `method: 'none'`. */
 export interface Correspondence {
 	method: 'direct-pixel-hit' | 'nearest-centroid' | 'none';
 	distancePx: number | null;
 	entityId: number | null;
+	reliable: boolean;
 }
 
 export interface ExecutedCheck {
@@ -61,8 +78,28 @@ export interface StageBreakdown {
 	kept: boolean;
 }
 
-export interface InspectReport {
+/**
+ * A ground-truth point marked `status: 'ambiguous'` in its TruthDocument. Deliberately
+ * carries NOTHING else -- no `whiteMaskSupport`, `correspondence`, `component`, `stages`,
+ * or `downstreamNote` -- because an ambiguous point is never resolved at all (see
+ * `inspectTruth`'s short-circuit). This is a genuinely different shape from "resolved but
+ * found nothing" (InspectReportResolved with `component: null`/`stages: []`), not the
+ * same shape with empty-looking values, so "never looked" can't be mistaken for "looked,
+ * found nothing."
+ */
+export interface InspectReportAmbiguous {
 	truth: TruthObject;
+	ambiguous: { reason: string };
+}
+
+/** A confident ground-truth point that was actually resolved (whether or not that
+ * resolution found a reliable corresponding component). `component: null`/`stages: []`
+ * covers both "no correspondence at all" and "a nearest-centroid match that exceeded the
+ * reliability threshold" -- see `correspondence.reliable` and `inspectTruth`'s doc
+ * comment for why an unreliable match doesn't get a component/stage report. */
+export interface InspectReportResolved {
+	truth: TruthObject;
+	ambiguous?: undefined;
 	whiteMaskSupport: WhiteMaskSupport;
 	correspondence: Correspondence;
 	component: { entityId: number; kindId: number; attrs: Record<string, number | string | boolean> } | null;
@@ -73,6 +110,8 @@ export interface InspectReport {
 	 * statement, not a stored fact. */
 	downstreamNote: string;
 }
+
+export type InspectReport = InspectReportAmbiguous | InspectReportResolved;
 
 function euclideanDistance(ax: number, ay: number, bx: number, by: number): number {
 	return Math.hypot(ax - bx, ay - by);
@@ -85,19 +124,34 @@ function findEntityCentroid(entity: EntityRecord): { x: number; y: number } | nu
 }
 
 /**
+ * Default ceiling for a nearest-centroid correspondence to count as `reliable`. Chosen on
+ * the order of the smallest realistic glyph in the imagery this tool was built against: a
+ * real Heritage nearest-centroid fallback once "matched" a ~15px-wide tee glyph to an
+ * unrelated entity 30px away -- clearly not a dependable correspondence, just the
+ * least-bad option among unrelated candidates. 20px sits between "close enough to
+ * plausibly be the same glyph" and "clearly a different object," for glyphs at roughly
+ * that scale. This is a default, not a hard-coded assumption: callers whose imagery is at
+ * a different resolution/scale should pass their own `maxDistancePx`.
+ */
+export const DEFAULT_MAX_CORRESPONDENCE_DISTANCE_PX = 20;
+
+/**
  * Resolves ground-truth point -> component entity, via the two-step correspondence
  * DESIGN.md describes: (1) does the labelmap have a bright pixel exactly at the truth
  * point -- if so, that pixel's label IS the answer, distance 0, no guessing; (2)
  * otherwise, fall back to the nearest spawned entity by centroid distance, reporting the
  * method and distance explicitly rather than silently picking one -- so a reader can
- * judge whether "nearest" is actually close enough to mean anything.
+ * judge whether "nearest" is actually close enough to mean anything. A nearest-centroid
+ * match beyond `maxDistancePx` is still reported honestly (method/distance/entityId are
+ * never hidden) but flagged `reliable: false` -- see Correspondence's doc comment.
  */
 export function resolveCorrespondence(
 	truth: TruthObject,
 	labelmap: Uint32Array,
 	widthPx: number,
 	heightPx: number,
-	entities: readonly EntityRecord[]
+	entities: readonly EntityRecord[],
+	maxDistancePx: number = DEFAULT_MAX_CORRESPONDENCE_DISTANCE_PX
 ): { whiteMaskSupport: WhiteMaskSupport; correspondence: Correspondence } {
 	const label = labelAt(labelmap, widthPx, heightPx, Math.round(truth.point.x), Math.round(truth.point.y));
 	const whiteMaskSupport: WhiteMaskSupport = { directHit: label !== 0, labelAtPoint: label };
@@ -109,7 +163,7 @@ export function resolveCorrespondence(
 		const entity = entities.find((e) => e.ordinal === label - 1);
 		return {
 			whiteMaskSupport,
-			correspondence: { method: 'direct-pixel-hit', distancePx: 0, entityId: entity?.id ?? null },
+			correspondence: { method: 'direct-pixel-hit', distancePx: 0, entityId: entity?.id ?? null, reliable: true },
 		};
 	}
 
@@ -121,11 +175,16 @@ export function resolveCorrespondence(
 		if (best === null || distance < best.distance) best = { entity, distance };
 	}
 	if (best === null) {
-		return { whiteMaskSupport, correspondence: { method: 'none', distancePx: null, entityId: null } };
+		return { whiteMaskSupport, correspondence: { method: 'none', distancePx: null, entityId: null, reliable: false } };
 	}
 	return {
 		whiteMaskSupport,
-		correspondence: { method: 'nearest-centroid', distancePx: best.distance, entityId: best.entity.id },
+		correspondence: {
+			method: 'nearest-centroid',
+			distancePx: best.distance,
+			entityId: best.entity.id,
+			reliable: best.distance <= maxDistancePx,
+		},
 	};
 }
 
@@ -198,12 +257,28 @@ export interface InspectOptions {
 	trace: TraceRun;
 	manifest: Pick<ManifestFragment, 'stages' | 'checks' | 'entityKinds'>;
 	labelmapDoc: LabelmapDocument;
+	/** Passed through to resolveCorrespondence's nearest-centroid reliability check.
+	 * Defaults to DEFAULT_MAX_CORRESPONDENCE_DISTANCE_PX. */
+	maxCorrespondenceDistancePx?: number;
 }
 
 export function inspectTruth(opts: InspectOptions): InspectReport {
 	const truth = opts.truth.objects.find((o) => o.label === opts.truthLabel);
 	if (!truth) {
 		throw new Error(`toph inspect: no ground-truth object labeled "${opts.truthLabel}" in the supplied truth document.`);
+	}
+
+	// An ambiguous truth object is never resolved at all -- no direct-pixel-hit lookup,
+	// no nearest-centroid search, nothing that could produce a number. Short-circuit
+	// before touching the labelmap or trace.entities, per IMPLEMENTATION-DECISIONS.md's
+	// "never approximate silently" stance: a point the ground-truth author explicitly
+	// couldn't pin down must not come back looking like a confident (or confidently
+	// empty) answer.
+	if (truth.status === 'ambiguous') {
+		return {
+			truth,
+			ambiguous: { reason: truth.reason ?? '(no reason given in the ground-truth fixture)' },
+		};
 	}
 
 	const labelmap = decodeLabelmap(opts.labelmapDoc);
@@ -213,14 +288,20 @@ export function inspectTruth(opts: InspectOptions): InspectReport {
 		labelmap,
 		opts.labelmapDoc.widthPx,
 		opts.labelmapDoc.heightPx,
-		entities
+		entities,
+		opts.maxCorrespondenceDistancePx
 	);
 
-	let component: InspectReport['component'] = null;
+	let component: InspectReportResolved['component'] = null;
 	let stages: StageBreakdown[] = [];
 	let downstreamNote = 'No corresponding component entity was found for this ground-truth point.';
 
-	if (correspondence.entityId !== null) {
+	// An unreliable nearest-centroid match is reported honestly above (method, distance,
+	// entityId), but is NOT trusted enough to proceed to component/stage reporting --
+	// same spirit as the ambiguous short-circuit: we looked, but "closest of the
+	// unrelated candidates" is not a dependable correspondence worth building a stage
+	// breakdown on top of.
+	if (correspondence.entityId !== null && correspondence.reliable) {
 		const entity = entities.find((e) => e.id === correspondence.entityId) ?? null;
 		if (entity) {
 			component = { entityId: entity.id, kindId: entity.kindId, attrs: entity.attrs };
@@ -236,7 +317,115 @@ export function inspectTruth(opts: InspectOptions): InspectReport {
 				? 'This component survived every instrumented check in its stage(s); any further (un-instrumented) stage is not recorded here and would need its own @toph annotations to trace.'
 				: `This component was rejected at "${lastStage.firstFailingCheck?.code}" in stage "${lastStage.stageName}" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.`;
 		}
+	} else if (correspondence.entityId !== null && !correspondence.reliable) {
+		downstreamNote = `The nearest entity (id ${correspondence.entityId}) is ${correspondence.distancePx?.toFixed(2)}px away, beyond the reliable-match threshold -- not treated as a corresponding component, so no stage breakdown was computed.`;
 	}
 
 	return { truth, whiteMaskSupport, correspondence, component, stages, downstreamNote };
+}
+
+/** Per-stage counts for buildSurvivalFunnel, in the caller-supplied `stageOrder`. */
+export interface FunnelStageCounts {
+	stageName: string;
+	/** Truth objects whose resolved (reliable) entity had at least one check event in this
+	 * stage. */
+	reached: number;
+	/** Of `reached`, how many passed every check recorded for that stage -- the same
+	 * "kept" definition StageBreakdown.kept already computes (via buildStageBreakdowns),
+	 * not a second pass/fail derivation. */
+	kept: number;
+}
+
+export interface FunnelReport {
+	totalTruthObjects: number;
+	confidentCount: number;
+	ambiguousCount: number;
+	/** Of the confident ones: how many resolved to a reliable corresponding component at
+	 * all (direct-pixel-hit, or nearest-centroid within the reliability threshold). An
+	 * unreliable nearest-centroid match does not count here, same as no match. */
+	correspondedCount: number;
+	stages: FunnelStageCounts[];
+	/** Of the corresponded entities: how many have their id appear as some OTHER entity's
+	 * `parentId` anywhere in `trace.entities` (i.e. a later `.map()`-derived spawn site
+	 * recognized them as its source object). */
+	materializedCount: number;
+}
+
+/**
+ * Runs `inspectTruth`'s correspondence + stage-breakdown logic across an ENTIRE truth
+ * fixture at once, instead of one point at a time, and tallies a simple survival funnel:
+ * how many ground-truth objects are confident vs. ambiguous, how many of the confident
+ * ones reliably corresponded to a component at all, how many of those reached and
+ * survived each stage in `stageOrder` (in order), and how many ultimately materialized
+ * into a later derived entity. Ambiguous truth objects and unreliable correspondences are
+ * excluded from every count past `ambiguousCount`/`correspondedCount` -- exactly the same
+ * "don't guess" stance `inspectTruth` takes for a single point, applied fixture-wide.
+ */
+export function buildSurvivalFunnel(opts: {
+	truth: TruthDocument;
+	trace: TraceRun;
+	manifest: Pick<ManifestFragment, 'stages' | 'checks' | 'entityKinds'>;
+	labelmapDoc: LabelmapDocument;
+	/** Stage NAMES in pipeline order, e.g. ['p1.tee.geometry', 'p1.tee.appearance'].
+	 * Never hardcoded by this function -- whatever the caller's trace/manifest actually
+	 * has. A name with no matching manifest stage simply reports reached=0, kept=0. */
+	stageOrder: string[];
+	maxCorrespondenceDistancePx?: number;
+}): FunnelReport {
+	const labelmap = decodeLabelmap(opts.labelmapDoc);
+	const entities = opts.trace.entities ?? [];
+
+	let confidentCount = 0;
+	let ambiguousCount = 0;
+	let correspondedCount = 0;
+	const correspondedEntityIds: number[] = [];
+
+	for (const truth of opts.truth.objects) {
+		if (truth.status === 'ambiguous') {
+			ambiguousCount += 1;
+			continue;
+		}
+		confidentCount += 1;
+
+		const { correspondence } = resolveCorrespondence(
+			truth,
+			labelmap,
+			opts.labelmapDoc.widthPx,
+			opts.labelmapDoc.heightPx,
+			entities,
+			opts.maxCorrespondenceDistancePx
+		);
+		if (correspondence.entityId === null || !correspondence.reliable) continue;
+
+		correspondedCount += 1;
+		correspondedEntityIds.push(correspondence.entityId);
+	}
+
+	const stageIndexByName = new Map(opts.stageOrder.map((name, index) => [name, index]));
+	const stages: FunnelStageCounts[] = opts.stageOrder.map((stageName) => ({ stageName, reached: 0, kept: 0 }));
+
+	let materializedCount = 0;
+	for (const entityId of correspondedEntityIds) {
+		// Reuse buildStageBreakdowns (the exact same function/logic inspectTruth's
+		// single-point query calls) rather than re-deriving "which stage did this entity
+		// reach, did it pass every check there" a second way that could drift.
+		const breakdowns = buildStageBreakdowns(entityId, opts.trace, opts.manifest);
+		for (const breakdown of breakdowns) {
+			const index = stageIndexByName.get(breakdown.stageName);
+			if (index === undefined) continue;
+			stages[index].reached += 1;
+			if (breakdown.kept) stages[index].kept += 1;
+		}
+
+		if (entities.some((e) => e.parentId === entityId)) materializedCount += 1;
+	}
+
+	return {
+		totalTruthObjects: opts.truth.objects.length,
+		confidentCount,
+		ambiguousCount,
+		correspondedCount,
+		stages,
+		materializedCount,
+	};
 }
