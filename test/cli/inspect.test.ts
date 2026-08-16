@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
 	buildStageBreakdowns,
@@ -7,7 +10,7 @@ import {
 	resolveCorrespondence,
 } from '../../src/cli/inspect.js';
 import { decodeLabelmap, labelAt, type LabelmapDocument } from '../../src/cli/labelmap.js';
-import type { TraceRun } from '../../src/runtime/index.js';
+import type { EntityRecord, TraceRun } from '../../src/runtime/index.js';
 import type { ManifestFragment } from '../../src/compiler/types.js';
 import type { TruthDocument } from '../../src/cli/inspect.js';
 
@@ -26,6 +29,29 @@ function tinyLabelmapDoc(): LabelmapDocument {
 			[2, 1], // index 15 = (3,3)
 		],
 	};
+}
+
+/** Builds a LabelmapDocument of the given size with exactly the given non-zero pixels set,
+ * RLE-encoding it the same way real labelmaps are encoded (see src/cli/labelmap.ts) --
+ * general-purpose so each nearest-pixel test can place its labeled pixels at exact,
+ * explicit coordinates without hand-deriving run-length pairs. */
+function labelmapWithPixels(
+	widthPx: number,
+	heightPx: number,
+	pixels: Array<{ x: number; y: number; label: number }>
+): LabelmapDocument {
+	const total = widthPx * heightPx;
+	const grid = new Array(total).fill(0);
+	for (const { x, y, label } of pixels) grid[y * widthPx + x] = label;
+	const runs: Array<[number, number]> = [];
+	let i = 0;
+	while (i < total) {
+		let j = i;
+		while (j < total && grid[j] === grid[i]) j++;
+		runs.push([grid[i], j - i]);
+		i = j;
+	}
+	return { assetId: 1, widthPx, heightPx, encoding: 'rle', runs };
 }
 
 describe('labelmap RLE decode/lookup', () => {
@@ -92,12 +118,16 @@ describe('resolveCorrespondence', () => {
 		expect(correspondence).toEqual({ method: 'direct-pixel-hit', distancePx: 0, entityId: 100, reliable: true });
 	});
 
-	it('no direct hit: falls back to nearest entity by centroid distance, reporting the method and distance honestly', () => {
+	it('no direct hit, but a labeled pixel exists nearby: resolves via nearest-pixel, not nearest-centroid', () => {
 		const doc = tinyLabelmapDoc();
 		const decoded = decodeLabelmap(doc);
-		// (3,2) is background in the labelmap; distance to entity 200's centroid (3,3) is
-		// 1, distance to entity 100's centroid (1,1) is sqrt(4+1)=sqrt(5) -- unambiguously
-		// closer to 200.
+		// (3,2) is background in the labelmap, but label 2's pixel at (3,3) is only 1px
+		// away -- well within the default search radius, so the new nearest-pixel step
+		// finds it before nearest-centroid ever runs. (Before nearest-pixel existed, this
+		// same fixture could only be resolved via nearest-centroid, which happened to
+		// land on the same entity/distance here because this synthetic component is a
+		// single pixel -- its centroid IS that pixel. nearest-pixel is the more precise,
+		// non-aggregate classification now that it exists.)
 		const { whiteMaskSupport, correspondence } = resolveCorrespondence(
 			{ label: 'H2', point: { x: 3, y: 2 } },
 			decoded,
@@ -106,16 +136,22 @@ describe('resolveCorrespondence', () => {
 			makeTrace().entities!
 		);
 		expect(whiteMaskSupport).toEqual({ directHit: false, labelAtPoint: 0 });
-		expect(correspondence.method).toBe('nearest-centroid');
+		expect(correspondence.method).toBe('nearest-pixel');
 		expect(correspondence.entityId).toBe(200);
 		expect(correspondence.distancePx).toBeCloseTo(1, 5);
-		// Well within the default reliability threshold.
 		expect(correspondence.reliable).toBe(true);
 	});
 
 	it('no entities at all -> method "none", no crash, not reliable', () => {
-		const decoded = decodeLabelmap(tinyLabelmapDoc());
-		const { correspondence } = resolveCorrespondence({ label: 'H3', point: { x: 2, y: 2 } }, decoded, 4, 4, []);
+		// An all-background labelmap -- neither direct-pixel-hit nor nearest-pixel finds
+		// anything, isolating the final "no entities to fall back to" case this test
+		// exists to cover. (tinyLabelmapDoc's two labeled pixels sit within the default
+		// 20px search radius of nearly every point on its tiny 4x4 grid, so it can no
+		// longer produce a genuine "no labelmap evidence at all" case -- see the
+		// nearest-pixel test just above, which now covers that fixture's actual behavior.)
+		const doc: LabelmapDocument = { assetId: 9, widthPx: 200, heightPx: 200, encoding: 'rle', runs: [[0, 40000]] };
+		const decoded = decodeLabelmap(doc);
+		const { correspondence } = resolveCorrespondence({ label: 'H3', point: { x: 2, y: 2 } }, decoded, 200, 200, []);
 		expect(correspondence).toEqual({ method: 'none', distancePx: null, entityId: null, reliable: false });
 	});
 
@@ -151,6 +187,100 @@ describe('resolveCorrespondence', () => {
 		expect(stricter.correspondence.reliable).toBe(false);
 		const looser = resolveCorrespondence({ label: 'F3', point: { x: 0, y: 0 } }, decoded, 200, 200, entities, 15);
 		expect(looser.correspondence.reliable).toBe(true);
+	});
+
+	describe('nearest-pixel (the direct fix for the H15-shaped centroid failure)', () => {
+		it('a truth point 1-2px from a labeled pixel resolves via nearest-pixel, even though that pixel\'s component has a centroid far outside the reliability threshold -- the exact H15 shape', () => {
+			// One real labeled pixel, close to the truth point -- exactly what direct-pixel-hit
+			// misses (truth doesn't land exactly on it) but the old nearest-centroid method
+			// also missed, because the registered entity's aggregate centroid (attrs below) is
+			// nowhere near either the pixel or the truth point: a large/sparse component whose
+			// centroid got dragged away by unrelated member pixels elsewhere, same as the real
+			// H15 tee glyph merging with unrelated bright pixels during detection.
+			const doc = labelmapWithPixels(50, 50, [{ x: 9, y: 11, label: 1 }]);
+			const decoded = decodeLabelmap(doc);
+			const entities: EntityRecord[] = [
+				{ id: 4242, kindId: 1, ordinal: 0, attrs: { centroidX: 40, centroidY: 40, areaPx: 551, fill: 0.17 } },
+			];
+			const truth = { label: 'H15-like', point: { x: 10.3, y: 10.7 } };
+
+			const { whiteMaskSupport, correspondence } = resolveCorrespondence(truth, decoded, 50, 50, entities);
+			expect(whiteMaskSupport).toEqual({ directHit: false, labelAtPoint: 0 });
+			expect(correspondence.method).toBe('nearest-pixel');
+			expect(correspondence.entityId).toBe(4242);
+			expect(correspondence.distancePx).toBeCloseTo(Math.hypot(10.3 - 9, 10.7 - 11), 5);
+			expect(correspondence.distancePx).toBeLessThan(2);
+			expect(correspondence.reliable).toBe(true);
+
+			// Proof this is the real bug this fix targets, not a contrived setup: on a
+			// labelmap with NO nearby labeled pixel at all (same entities, same truth point),
+			// the old nearest-centroid fallback -- still exactly as it behaves today -- reports
+			// this exact entity as unreliable, because centroidX/Y really is ~42px away. That
+			// is precisely what happened to H15 before this fix.
+			const emptyDoc: LabelmapDocument = { assetId: 1, widthPx: 50, heightPx: 50, encoding: 'rle', runs: [[0, 2500]] };
+			const fallbackOnly = resolveCorrespondence(truth, decodeLabelmap(emptyDoc), 50, 50, entities);
+			expect(fallbackOnly.correspondence.method).toBe('nearest-centroid');
+			expect(fallbackOnly.correspondence.entityId).toBe(4242);
+			expect(fallbackOnly.correspondence.reliable).toBe(false);
+		});
+
+		it('a labeled pixel just outside maxDistancePx is not picked up -- falls through to nearest-centroid instead', () => {
+			// Pixel sits exactly 6px (Euclidean, on a straight horizontal line so Chebyshev and
+			// Euclidean distance coincide) from the rounded truth pixel.
+			const doc = labelmapWithPixels(30, 30, [{ x: 16, y: 10, label: 1 }]);
+			const decoded = decodeLabelmap(doc);
+			const entities: EntityRecord[] = [{ id: 700, kindId: 1, ordinal: 0, attrs: { centroidX: 10, centroidY: 10 } }];
+			const truth = { label: 'B1', point: { x: 10, y: 10 } };
+
+			// Bound of 5px: the labeled pixel at distance 6 is out of range, so nearest-pixel
+			// must not find it -- falls through to nearest-centroid, which (coincidentally
+			// placed at the truth point here) reports distance 0 and reliable.
+			const tooFar = resolveCorrespondence(truth, decoded, 30, 30, entities, 5);
+			expect(tooFar.correspondence.method).toBe('nearest-centroid');
+			expect(tooFar.correspondence.entityId).toBe(700);
+			expect(tooFar.correspondence.distancePx).toBeCloseTo(0, 5);
+			expect(tooFar.correspondence.reliable).toBe(true);
+
+			// Sanity check on the bound itself: raising maxDistancePx to exactly the pixel's
+			// distance (6, inclusive) DOES find it via nearest-pixel -- proving the miss above
+			// was really the distance bound, not some other reason the pixel wasn't found.
+			const justEnough = resolveCorrespondence(truth, decoded, 30, 30, entities, 6);
+			expect(justEnough.correspondence.method).toBe('nearest-pixel');
+			expect(justEnough.correspondence.entityId).toBe(700);
+			expect(justEnough.correspondence.distancePx).toBeCloseTo(6, 5);
+			expect(justEnough.correspondence.reliable).toBe(true);
+		});
+
+		it('a labeled pixel just outside maxDistancePx, with no entities at all, falls through to method "none"', () => {
+			const doc = labelmapWithPixels(30, 30, [{ x: 16, y: 10, label: 1 }]);
+			const decoded = decodeLabelmap(doc);
+			const truth = { label: 'B2', point: { x: 10, y: 10 } };
+			const { correspondence } = resolveCorrespondence(truth, decoded, 30, 30, [], 5);
+			expect(correspondence).toEqual({ method: 'none', distancePx: null, entityId: null, reliable: false });
+		});
+
+		it('ties within the winning ring are broken deterministically by true Euclidean distance, then lowest row-major pixel index -- same result on every run', () => {
+			// Truth point exactly on an integer pixel that is itself background. (9,10) and
+			// (11,10) are both Chebyshev- AND Euclidean-distance 1 away -- a genuine tie. (9,10)
+			// has the lower row-major index (same row, smaller column), so it must win.
+			const doc = labelmapWithPixels(30, 30, [
+				{ x: 9, y: 10, label: 1 },
+				{ x: 11, y: 10, label: 2 },
+			]);
+			const decoded = decodeLabelmap(doc);
+			const entities: EntityRecord[] = [
+				{ id: 111, kindId: 1, ordinal: 0, attrs: {} },
+				{ id: 222, kindId: 1, ordinal: 1, attrs: {} },
+			];
+			const truth = { label: 'T1', point: { x: 10, y: 10 } };
+
+			for (let run = 0; run < 5; run++) {
+				const { correspondence } = resolveCorrespondence(truth, decoded, 30, 30, entities);
+				expect(correspondence.method).toBe('nearest-pixel');
+				expect(correspondence.entityId).toBe(111);
+				expect(correspondence.distancePx).toBeCloseTo(1, 5);
+			}
+		});
 	});
 });
 
@@ -469,5 +599,79 @@ describe('buildSurvivalFunnel', () => {
 			maxCorrespondenceDistancePx: 2000, // wide enough that H4 now corresponds too
 		});
 		expect(report.correspondedCount).toBe(3);
+	});
+});
+
+// Regression coverage against the REAL, already-committed Heritage fixture (not a
+// synthetic stand-in) -- proves the nearest-pixel fix on the actual data shape that
+// exposed it: entity 1233 is a genuine 60x54px, fill-0.17 flood-fill-merged component (see
+// its attrs below), and H15's truth point really does sit ~1.6px from one of that
+// component's own labeled pixels while its centroid sits ~30px away. Expected entity ids
+// (1263, 495, 1224, 1233) and the pre-fix nearest-centroid numbers referenced in comments
+// below are read directly from examples/heritage-p1-verified/inspect-output.txt, not
+// assumed.
+describe('resolveCorrespondence against the real Heritage P1 fixture (examples/heritage-p1-verified)', () => {
+	const fixtureDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'examples', 'heritage-p1-verified');
+	const heritageTruth: TruthDocument = JSON.parse(readFileSync(join(fixtureDir, 'truth.json'), 'utf8'));
+	const heritageLabelmapDoc: LabelmapDocument = JSON.parse(readFileSync(join(fixtureDir, 'labelmap.json'), 'utf8'));
+	const heritageTrace: TraceRun = JSON.parse(readFileSync(join(fixtureDir, 'trace.json'), 'utf8'));
+	const heritageLabelmap = decodeLabelmap(heritageLabelmapDoc);
+	const heritageEntities = heritageTrace.entities ?? [];
+
+	function resolveHole(label: string) {
+		const truth = heritageTruth.objects.find((o) => o.label === label);
+		if (!truth) throw new Error(`fixture truth.json has no hole labeled ${label}`);
+		return resolveCorrespondence(truth, heritageLabelmap, heritageLabelmapDoc.widthPx, heritageLabelmapDoc.heightPx, heritageEntities);
+	}
+
+	it('H15: the real component-merge failure now resolves via nearest-pixel, reliably, to entity 1233 -- not the 30.38px-away unreliable nearest-centroid "no match" this fix replaces', () => {
+		const { whiteMaskSupport, correspondence } = resolveHole('H15');
+		expect(whiteMaskSupport.directHit).toBe(false);
+		expect(correspondence.method).toBe('nearest-pixel');
+		expect(correspondence.entityId).toBe(1233);
+		expect(correspondence.distancePx).toBeCloseTo(1.6155, 2); // ~1.62px, per the manual ring-search verification
+		expect(correspondence.reliable).toBe(true);
+	});
+
+	it('H1, H7, H14: the previously-working holes still resolve to the exact same entity ids as before, now via nearest-pixel', () => {
+		// method changes from 'nearest-centroid' to 'nearest-pixel' (a real labeled pixel is
+		// within a few px of every one of these truth points -- see each comment below), but
+		// entityId is unchanged in all three cases: this fix is additive, not a regression.
+		// Distances are NOT smaller than the old nearest-centroid numbers here -- these are
+		// small, well-formed components whose aggregate centroid happens to sit almost exactly
+		// on the annotated truth point (old distances 0.06px/0.23px/0.12px, already sub-pixel),
+		// so measuring against real pixel-grid positions instead is a few px, not tighter. That
+		// is expected and fine: what nearest-pixel fixes is H15-shaped cases, where the old
+		// centroid distance was wrong by an order of magnitude (30px), not these three.
+		const h1 = resolveHole('H1');
+		expect(h1.correspondence.method).toBe('nearest-pixel');
+		expect(h1.correspondence.entityId).toBe(1263);
+		expect(h1.correspondence.reliable).toBe(true);
+		expect(h1.correspondence.distancePx).toBeCloseTo(2.9428, 2);
+
+		const h7 = resolveHole('H7');
+		expect(h7.correspondence.method).toBe('nearest-pixel');
+		expect(h7.correspondence.entityId).toBe(495);
+		expect(h7.correspondence.reliable).toBe(true);
+		expect(h7.correspondence.distancePx).toBeCloseTo(2.7731, 2);
+
+		const h14 = resolveHole('H14');
+		expect(h14.correspondence.method).toBe('nearest-pixel');
+		expect(h14.correspondence.entityId).toBe(1224);
+		expect(h14.correspondence.reliable).toBe(true);
+		expect(h14.correspondence.distancePx).toBeCloseTo(3.1241, 2);
+	});
+
+	it('every nearest-pixel distance across all 15 confidently-resolved holes stays well under the reliability threshold', () => {
+		// H5/H6/H10 are status:'ambiguous' and must stay untouched/unresolved -- excluded here,
+		// matching the same exclusion inspectTruth's ambiguous short-circuit enforces.
+		const confidentHoles = heritageTruth.objects.filter((o) => o.status !== 'ambiguous').map((o) => o.label);
+		expect(confidentHoles).toHaveLength(15);
+		for (const label of confidentHoles) {
+			const { correspondence } = resolveHole(label);
+			expect(correspondence.method).toBe('nearest-pixel');
+			expect(correspondence.reliable).toBe(true);
+			expect(correspondence.distancePx).toBeLessThan(4);
+		}
 	});
 });

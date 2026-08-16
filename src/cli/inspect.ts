@@ -46,12 +46,14 @@ export interface WhiteMaskSupport {
  * `reliable` mirrors the same judgment as a boolean so callers don't have to re-derive it
  * from `distancePx`/`method` themselves. Direct pixel hits are always reliable (distance 0,
  * unambiguous by construction -- the truth point landed exactly on a labeled pixel, there is
- * no "nearest" guess involved). A nearest-centroid match is reliable only when its distance
- * is within the caller's threshold; beyond that it is still reported honestly (method,
- * distance, and entityId are never hidden or nulled out) but callers should treat it as "no
- * dependable correspondence," the same as `method: 'none'`. */
+ * no "nearest" guess involved). A nearest-pixel match is also always reliable, for the same
+ * reason: it's a labeled pixel actually found near the truth point, not an aggregate guess --
+ * see `nearestLabeledPixel`'s doc comment. A nearest-centroid match is reliable only when its
+ * distance is within the caller's threshold; beyond that it is still reported honestly
+ * (method, distance, and entityId are never hidden or nulled out) but callers should treat it
+ * as "no dependable correspondence," the same as `method: 'none'`. */
 export interface Correspondence {
-	method: 'direct-pixel-hit' | 'nearest-centroid' | 'none';
+	method: 'direct-pixel-hit' | 'nearest-pixel' | 'nearest-centroid' | 'none';
 	distancePx: number | null;
 	entityId: number | null;
 	reliable: boolean;
@@ -123,6 +125,75 @@ function findEntityCentroid(entity: EntityRecord): { x: number; y: number } | nu
 	return null;
 }
 
+type PixelHit = { x: number; y: number; label: number; distance: number };
+
+/**
+ * The direct fix for the failure DEFAULT_MAX_CORRESPONDENCE_DISTANCE_PX's doc comment
+ * describes: a large/irregular component's aggregate centroid can sit far from a truth point
+ * that nonetheless lands right on that component's own pixels (the tee glyph merged with
+ * unrelated bright pixels during detection). Rather than trusting the centroid, this walks an
+ * expanding square ring -- Chebyshev distance 0, 1, 2, ... -- outward from the rounded truth
+ * pixel, directly against the decoded labelmap, and stops at the first ring containing any
+ * labeled (non-zero) pixel: real, non-aggregate evidence that the truth point sits right next
+ * to this exact component, not a guess about which component is "closest" in some aggregate
+ * sense. Bounded by `maxDistancePx` so it can't wander arbitrarily far across a sparse
+ * labelmap. A ring is Chebyshev-uniform but not Euclidean-uniform (corner pixels are farther
+ * from the truth point than edge-midpoint pixels at the same radius), so among the winning
+ * ring's hits, ties are broken by true Euclidean distance to the exact (unrounded) truth
+ * point first, then -- if still tied -- by lowest row-major pixel index, so the result is the
+ * same on every run. Returns null if no labeled pixel is found within `maxDistancePx`.
+ */
+function nearestLabeledPixel(
+	labelmap: Uint32Array,
+	widthPx: number,
+	heightPx: number,
+	point: { x: number; y: number },
+	maxDistancePx: number
+): PixelHit | null {
+	const roundedX = Math.round(point.x);
+	const roundedY = Math.round(point.y);
+
+	// Ties within a ring are broken by true Euclidean distance to the exact (unrounded)
+	// truth point first (a ring is Chebyshev-uniform, not Euclidean-uniform -- its corners
+	// are farther from the truth point than its edge midpoints), then -- if still tied --
+	// by lowest row-major pixel index, so the winner is the same on every run.
+	const consider = (x: number, y: number, best: PixelHit | null): PixelHit | null => {
+		if (x < 0 || y < 0 || x >= widthPx || y >= heightPx) return best;
+		const label = labelmap[y * widthPx + x];
+		if (label === 0) return best;
+		const distance = euclideanDistance(point.x, point.y, x, y);
+		const rowMajorIndex = y * widthPx + x;
+		const bestRowMajorIndex = best === null ? -1 : best.y * widthPx + best.x;
+		if (best === null || distance < best.distance || (distance === best.distance && rowMajorIndex < bestRowMajorIndex)) {
+			return { x, y, label, distance };
+		}
+		return best;
+	};
+
+	for (let radius = 0; radius <= maxDistancePx; radius++) {
+		let best: PixelHit | null = null;
+		if (radius === 0) {
+			best = consider(roundedX, roundedY, best);
+		} else {
+			// Visit only the ring's perimeter -- O(radius) cells -- rather than scanning the
+			// full (2*radius+1)^2 filled square and discarding the interior. That distinction
+			// matters because callers can pass a `maxDistancePx` much larger than the 20px
+			// default (buildSurvivalFunnel's tests do), and a filled-square scan would make
+			// the search cost cubic in `maxDistancePx` instead of quadratic.
+			for (let dx = -radius; dx <= radius; dx++) {
+				best = consider(roundedX + dx, roundedY - radius, best);
+				best = consider(roundedX + dx, roundedY + radius, best);
+			}
+			for (let dy = -radius + 1; dy <= radius - 1; dy++) {
+				best = consider(roundedX - radius, roundedY + dy, best);
+				best = consider(roundedX + radius, roundedY + dy, best);
+			}
+		}
+		if (best !== null) return best;
+	}
+	return null;
+}
+
 /**
  * Default ceiling for a nearest-centroid correspondence to count as `reliable`. Chosen on
  * the order of the smallest realistic glyph in the imagery this tool was built against: a
@@ -136,14 +207,17 @@ function findEntityCentroid(entity: EntityRecord): { x: number; y: number } | nu
 export const DEFAULT_MAX_CORRESPONDENCE_DISTANCE_PX = 20;
 
 /**
- * Resolves ground-truth point -> component entity, via the two-step correspondence
- * DESIGN.md describes: (1) does the labelmap have a bright pixel exactly at the truth
- * point -- if so, that pixel's label IS the answer, distance 0, no guessing; (2)
- * otherwise, fall back to the nearest spawned entity by centroid distance, reporting the
- * method and distance explicitly rather than silently picking one -- so a reader can
- * judge whether "nearest" is actually close enough to mean anything. A nearest-centroid
- * match beyond `maxDistancePx` is still reported honestly (method/distance/entityId are
- * never hidden) but flagged `reliable: false` -- see Correspondence's doc comment.
+ * Resolves ground-truth point -> component entity, via the correspondence DESIGN.md
+ * describes, in three steps: (1) does the labelmap have a bright pixel exactly at the
+ * truth point -- if so, that pixel's label IS the answer, distance 0, no guessing; (2)
+ * otherwise, search an expanding ring of actual labeled pixels outward from that same
+ * rounded point (see `nearestLabeledPixel`'s doc comment) -- still real pixel evidence,
+ * just not exactly under the point; (3) only if that bounded search finds nothing, fall
+ * back to the nearest spawned entity by centroid distance, reporting the method and
+ * distance explicitly rather than silently picking one -- so a reader can judge whether
+ * "nearest" is actually close enough to mean anything. A nearest-centroid match beyond
+ * `maxDistancePx` is still reported honestly (method/distance/entityId are never hidden)
+ * but flagged `reliable: false` -- see Correspondence's doc comment.
  */
 export function resolveCorrespondence(
 	truth: TruthObject,
@@ -164,6 +238,23 @@ export function resolveCorrespondence(
 		return {
 			whiteMaskSupport,
 			correspondence: { method: 'direct-pixel-hit', distancePx: 0, entityId: entity?.id ?? null, reliable: true },
+		};
+	}
+
+	const nearestPixel = nearestLabeledPixel(labelmap, widthPx, heightPx, truth.point, maxDistancePx);
+	if (nearestPixel !== null) {
+		// Label N corresponds to the entity spawned at ordinal N-1 -- same mapping
+		// direct-pixel-hit uses just above, because this is the same kind of evidence (an
+		// actual labeled pixel), just not exactly under the truth point.
+		const entity = entities.find((e) => e.ordinal === nearestPixel.label - 1);
+		return {
+			whiteMaskSupport,
+			correspondence: {
+				method: 'nearest-pixel',
+				distancePx: nearestPixel.distance,
+				entityId: entity?.id ?? null,
+				reliable: true,
+			},
 		};
 	}
 
