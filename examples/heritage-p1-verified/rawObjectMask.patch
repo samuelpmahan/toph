@@ -1,0 +1,147 @@
+--- a/src/lib/autoAnnotation/rawObjectMask.ts
++++ b/src/lib/autoAnnotation/rawObjectMask.ts
+@@ -25,7 +25,7 @@
+  * fill bounds as a real tee-pad.
+  */
+ 
+-import { passesTeeAppearanceCheck } from './teeAppearance';
++import { TEE_APPEARANCE_THRESHOLD, bestTeeTemplateScore, extractCanonicalTeePatch } from './teeAppearance';
+ 
+ export interface RawObjectMaskRaster {
+ 	readonly rgba: Uint8Array | Uint8ClampedArray;
+@@ -82,7 +82,7 @@
+ 	readonly diagnostics: RawObjectMaskDiagnostics;
+ }
+ 
+-interface MaskComponent {
++export interface MaskComponent {
+ 	readonly minX: number;
+ 	readonly minY: number;
+ 	readonly maxX: number;
+@@ -118,20 +118,23 @@
+ 		: sorted[middle];
+ }
+ 
+-function collectComponents(
++export function collectComponents(
+ 	mask: Uint8Array,
+ 	width: number,
+ 	height: number,
+-	queue: Int32Array
++	queue: Int32Array,
++	labels?: Uint16Array
+ ): MaskComponent[] {
+ 	const components: MaskComponent[] = [];
+ 	for (let seed = 0; seed < mask.length; seed += 1) {
+ 		if (mask[seed] !== 1) continue;
+ 
++		const componentLabel = components.length + 1;
+ 		let head = 0;
+ 		let tail = 0;
+ 		queue[tail++] = seed;
+ 		mask[seed] = 2;
++		if (labels) labels[seed] = componentLabel;
+ 
+ 		let minX = width;
+ 		let minY = height;
+@@ -171,6 +174,7 @@
+ 					const neighbor = row + nx;
+ 					if (mask[neighbor] !== 1) continue;
+ 					mask[neighbor] = 2;
++					if (labels) labels[neighbor] = componentLabel;
+ 					queue[tail++] = neighbor;
+ 				}
+ 			}
+@@ -283,6 +287,8 @@
+ 	}
+ 
+ 	const queue = new Int32Array(pixelCount);
++	/** @toph snapshot bright.mask kind=mask ref=bright width=width height=height */
++	/** @toph entities component */
+ 	const brightComponents = collectComponents(bright, width, height, queue);
+ 	const darkComponents = collectComponents(dark, width, height, queue);
+ 
+@@ -321,36 +327,60 @@
+ 		const maxY = Math.min(height - 1, badgeMaxY + verticalMargin);
+ 		const badgeOverlapMargin = Math.max(2, badgeMedianHeight * 0.08);
+ 
+-		teeComponents = brightComponents.filter((component) => {
++		const geometryPool = brightComponents.filter((component) => {
+ 			if (component.centroidY < minY || component.centroidY > maxY) return false;
+ 			if (centerFallsInsideBadge(component, badgeComponents, badgeOverlapMargin)) return false;
++			return true;
++		});
+ 
+-			const minDimension = Math.min(component.widthPx, component.heightPx);
+-			const maxDimension = Math.max(component.widthPx, component.heightPx);
+-			const bboxAspect = maxDimension / Math.max(1, minDimension);
+-
+-			return (
+-				component.areaPx >= basketMedianArea * 0.09 &&
+-				component.areaPx <= basketMedianArea * 0.35 &&
+-				minDimension >= badgeMedianHeight * 0.45 &&
+-				maxDimension <= basketMedianWidth * 2 &&
+-				bboxAspect <= 2.2 &&
+-				component.fill >= 0.12 &&
+-				component.fill <= 0.55
+-			);
++		/** @toph filter p1.tee.geometry */
++		teeComponents = geometryPool.filter((component) => {
++			/** @toph check area.min unit=px2 */
++			const areaMinOk = component.areaPx >= basketMedianArea * 0.09;
++			if (!areaMinOk) return false;
++			/** @toph check area.max unit=px2 */
++			const areaMaxOk = component.areaPx <= basketMedianArea * 0.35;
++			if (!areaMaxOk) return false;
++			/** @toph check min-dimension unit=px */
++			const minDimensionOk = Math.min(component.widthPx, component.heightPx) >= badgeMedianHeight * 0.45;
++			if (!minDimensionOk) return false;
++			/** @toph check max-dimension unit=px */
++			const maxDimensionOk = Math.max(component.widthPx, component.heightPx) <= basketMedianWidth * 2;
++			if (!maxDimensionOk) return false;
++			/** @toph check bbox-aspect.max */
++			const bboxAspectOk =
++				Math.max(component.widthPx, component.heightPx) /
++					Math.max(1, Math.min(component.widthPx, component.heightPx)) <=
++				2.2;
++			if (!bboxAspectOk) return false;
++			/** @toph check fill.min */
++			const fillMinOk = component.fill >= 0.12;
++			if (!fillMinOk) return false;
++			/** @toph check fill.max */
++			const fillMaxOk = component.fill <= 0.55;
++			if (!fillMaxOk) return false;
++			return true;
+ 		});
+ 
+-		teeComponents = teeComponents.filter((component) =>
+-			passesTeeAppearanceCheck(raster, {
+-				xPx: component.centroidX,
+-				yPx: component.centroidY,
+-				orientationDeg: component.orientationDeg,
+-				widthPx: component.widthPx,
+-				heightPx: component.heightPx
+-			})
+-		);
++		/** @toph filter p1.tee.appearance */
++		teeComponents = teeComponents.filter((component) => {
++			/** @toph check appearance.ncc */
++			const appearanceOk =
++				bestTeeTemplateScore(
++					extractCanonicalTeePatch(raster, {
++						xPx: component.centroidX,
++						yPx: component.centroidY,
++						orientationDeg: component.orientationDeg,
++						widthPx: component.widthPx,
++						heightPx: component.heightPx
++					})
++				) >= TEE_APPEARANCE_THRESHOLD;
++			if (!appearanceOk) return false;
++			return true;
++		});
+ 	}
+ 
++	/** @toph entities tee */
+ 	const tees = sortComponents(teeComponents).map(
+ 		(component): RawMaskTee => ({
+ 			xPx: component.centroidX,

@@ -1,0 +1,5 @@
+Truth objects: 18 total (15 confident, 3 ambiguous)
+Corresponded: 14 / 15 confident
+  p1.tee.geometry: reached 14, kept 0
+  p1.tee.appearance: reached 0, kept 0
+Materialized: 0

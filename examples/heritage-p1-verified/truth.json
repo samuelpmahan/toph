@@ -1,0 +1,154 @@
+{
+  "objects": [
+    {
+      "label": "H1",
+      "point": {
+        "x": 25.5,
+        "y": 1613.9
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H2",
+      "point": {
+        "x": 395.2,
+        "y": 1531.4
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H3",
+      "point": {
+        "x": 580.6,
+        "y": 1536.0
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H4",
+      "point": {
+        "x": 708.3,
+        "y": 1396.7
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H5",
+      "point": {
+        "x": 728.19,
+        "y": 1151.16
+      },
+      "expect": "tee",
+      "status": "ambiguous",
+      "reason": "tee glyph visually overlaps/merges with the basket icon at this map zoom -- not separable as a distinct bright component"
+    },
+    {
+      "label": "H6",
+      "point": {
+        "x": 738.21,
+        "y": 898.07
+      },
+      "expect": "tee",
+      "status": "ambiguous",
+      "reason": "tee glyph visually overlaps/merges with the basket icon at this map zoom -- not separable as a distinct bright component"
+    },
+    {
+      "label": "H7",
+      "point": {
+        "x": 870.8,
+        "y": 715.5
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H8",
+      "point": {
+        "x": 1029.0,
+        "y": 745.3
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H9",
+      "point": {
+        "x": 1094.6,
+        "y": 1049.7
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H10",
+      "point": {
+        "x": 978.01,
+        "y": 1148.32
+      },
+      "expect": "tee",
+      "status": "ambiguous",
+      "reason": "tee glyph visually overlaps/merges with the basket icon at this map zoom -- not separable as a distinct bright component"
+    },
+    {
+      "label": "H11",
+      "point": {
+        "x": 882.5,
+        "y": 852.4
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H12",
+      "point": {
+        "x": 798.1,
+        "y": 1153.9
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H13",
+      "point": {
+        "x": 829.1,
+        "y": 1350.5
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H14",
+      "point": {
+        "x": 957.0,
+        "y": 1486.6
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H15",
+      "point": {
+        "x": 1223.5,
+        "y": 1514.6
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H16",
+      "point": {
+        "x": 1005.1,
+        "y": 1567.4
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H17",
+      "point": {
+        "x": 684.0,
+        "y": 1632.9
+      },
+      "expect": "tee"
+    },
+    {
+      "label": "H18",
+      "point": {
+        "x": 349.4,
+        "y": 1479.4
+      },
+      "expect": "tee"
+    }
+  ]
+}

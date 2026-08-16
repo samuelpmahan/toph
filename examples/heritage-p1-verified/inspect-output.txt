@@ -1,0 +1,461 @@
+=== H1 ===
+Ground truth: H1 at (25.5, 1613.9) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.06px
+  component entity: 1263
+  attrs:
+    minX: 18
+    minY: 1609
+    maxX: 33
+    maxY: 1619
+    widthPx: 16
+    heightPx: 11
+    areaPx: 133
+    centroidX: 25.48872180451128
+    centroidY: 1613.954887218045
+    orientationDeg: 1.0598587462330897
+    fill: 0.7556818181818182
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         133 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H2 ===
+Ground truth: H2 at (395.2, 1531.4) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.29px
+  component entity: 1237
+  attrs:
+    minX: 387
+    minY: 1524
+    maxX: 404
+    maxY: 1539
+    widthPx: 18
+    heightPx: 16
+    areaPx: 137
+    centroidX: 395.2189781021898
+    centroidY: 1531.6934306569342
+    orientationDeg: 26.429974413128292
+    fill: 0.4756944444444444
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         137 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H3 ===
+Ground truth: H3 at (580.6, 1536) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.08px
+  component entity: 1242
+  attrs:
+    minX: 573
+    minY: 1530
+    maxX: 588
+    maxY: 1542
+    widthPx: 16
+    heightPx: 13
+    areaPx: 116
+    centroidX: 580.551724137931
+    centroidY: 1536.0603448275863
+    orientationDeg: 8.676848593767943
+    fill: 0.5576923076923077
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         116 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H4 ===
+Ground truth: H4 at (708.3, 1396.7) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.22px
+  component entity: 1202
+  attrs:
+    minX: 702
+    minY: 1388
+    maxX: 715
+    maxY: 1405
+    widthPx: 14
+    heightPx: 18
+    areaPx: 130
+    centroidX: 708.1461538461539
+    centroidY: 1396.5384615384614
+    orientationDeg: 100.0438695581755
+    fill: 0.5158730158730159
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         130 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H7 ===
+Ground truth: H7 at (870.8, 715.5) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.23px
+  component entity: 495
+  attrs:
+    minX: 863
+    minY: 709
+    maxX: 879
+    maxY: 722
+    widthPx: 17
+    heightPx: 14
+    areaPx: 123
+    centroidX: 871.0325203252032
+    centroidY: 715.5040650406504
+    orientationDeg: 167.70559822904957
+    fill: 0.5168067226890757
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         123 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H8 ===
+Ground truth: H8 at (1029, 745.3) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.05px
+  component entity: 550
+  attrs:
+    minX: 1022
+    minY: 737
+    maxX: 1036
+    maxY: 754
+    widthPx: 15
+    heightPx: 18
+    areaPx: 133
+    centroidX: 1029.045112781955
+    centroidY: 745.3157894736842
+    orientationDeg: 80.61719949185425
+    fill: 0.4925925925925926
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         133 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H9 ===
+Ground truth: H9 at (1094.6, 1049.7) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.19px
+  component entity: 906
+  attrs:
+    minX: 1087
+    minY: 1041
+    maxX: 1102
+    maxY: 1058
+    widthPx: 16
+    heightPx: 18
+    areaPx: 131
+    centroidX: 1094.679389312977
+    centroidY: 1049.526717557252
+    orientationDeg: 113.84704738930245
+    fill: 0.4548611111111111
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         131 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H11 ===
+Ground truth: H11 at (882.5, 852.4) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.21px
+  component entity: 673
+  attrs:
+    minX: 876
+    minY: 844
+    maxX: 889
+    maxY: 861
+    widthPx: 14
+    heightPx: 18
+    areaPx: 121
+    centroidX: 882.4297520661157
+    centroidY: 852.595041322314
+    orientationDeg: 104.35697562264137
+    fill: 0.4801587301587302
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         121 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H12 ===
+Ground truth: H12 at (798.1, 1153.9) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.24px
+  component entity: 1036
+  attrs:
+    minX: 792
+    minY: 1146
+    maxX: 804
+    maxY: 1162
+    widthPx: 13
+    heightPx: 17
+    areaPx: 124
+    centroidX: 798.2741935483871
+    centroidY: 1153.741935483871
+    orientationDeg: 98.6500648337023
+    fill: 0.5610859728506787
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         124 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H13 ===
+Ground truth: H13 at (829.1, 1350.5) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.09px
+  component entity: 1195
+  attrs:
+    minX: 824
+    minY: 1343
+    maxX: 835
+    maxY: 1358
+    widthPx: 12
+    heightPx: 16
+    areaPx: 122
+    centroidX: 829.172131147541
+    centroidY: 1350.549180327869
+    orientationDeg: 86.29570467142321
+    fill: 0.6354166666666666
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         122 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H14 ===
+Ground truth: H14 at (957, 1486.6) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.12px
+  component entity: 1224
+  attrs:
+    minX: 949
+    minY: 1480
+    maxX: 965
+    maxY: 1493
+    widthPx: 17
+    heightPx: 14
+    areaPx: 119
+    centroidX: 956.890756302521
+    centroidY: 1486.563025210084
+    orientationDeg: 16.71843335310976
+    fill: 0.5
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         119 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H15 ===
+Ground truth: H15 at (1223.5, 1514.6) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 30.38px
+  No corresponding component found.
+
+Downstream: The nearest entity (id 1233) is 30.38px away, beyond the reliable-match threshold -- not treated as a corresponding component, so no stage breakdown was computed.
+
+=== H16 ===
+Ground truth: H16 at (1005.1, 1567.4) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.13px
+  component entity: 1250
+  attrs:
+    minX: 997
+    minY: 1560
+    maxX: 1014
+    maxY: 1575
+    widthPx: 18
+    heightPx: 16
+    areaPx: 126
+    centroidX: 1005.0238095238095
+    centroidY: 1567.2936507936508
+    orientationDeg: 157.94510095957875
+    fill: 0.4375
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         126 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H17 ===
+Ground truth: H17 at (684, 1632.9) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.46px
+  component entity: 1269
+  attrs:
+    minX: 677
+    minY: 1628
+    maxX: 692
+    maxY: 1638
+    widthPx: 16
+    heightPx: 11
+    areaPx: 130
+    centroidX: 684.4538461538461
+    centroidY: 1632.9846153846154
+    orientationDeg: 0.5991434002312701
+    fill: 0.7386363636363636
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         130 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
+=== H18 ===
+Ground truth: H18 at (349.4, 1479.4) (expect: tee)
+
+White-mask support:
+  No bright pixel exactly at the truth point.
+
+Correspondence:
+  method: nearest-centroid
+  distance: 0.14px
+  component entity: 1223
+  attrs:
+    minX: 342
+    minY: 1474
+    maxX: 357
+    maxY: 1485
+    widthPx: 16
+    heightPx: 12
+    areaPx: 139
+    centroidX: 349.42446043165467
+    centroidY: 1479.5395683453237
+    orientationDeg: 178.518116529277
+    fill: 0.7239583333333334
+
+Stage: p1.tee.geometry  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:337)
+  Checks executed (in order):
+    area.min         139 px2 gte 157.14 px2  [FAIL]  (chainspot/src/lib/autoAnnotation/rawObjectMask.ts:339)
+  First failing check: area.min
+  Checks NOT evaluated: area.max, min-dimension, max-dimension, bbox-aspect.max, fill.min, fill.max
+  Kept: false
+
+Downstream: This component was rejected at "area.min" in stage "p1.tee.geometry" -- every check and stage after that point never ran, so nothing downstream (including any un-instrumented appearance/association stage) was evaluated.
+
