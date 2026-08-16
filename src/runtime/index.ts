@@ -86,17 +86,27 @@ export interface AssetRecord {
 }
 
 /** One entity spawned by a `@toph entities <kind>` site. `ordinal` is 0-indexed and
- * scoped to that one spawnEntities() call (its index within the spawned array).
- * `attrs` holds the spawned object's own enumerable primitive-valued properties only
- * (see spawnEntities's doc comment). There is deliberately no `kept` flag here (unlike
- * ElementRecord) -- an entity can flow into more than one later filter stage over its
- * lifetime, so "was it kept" is a per-stage question answered by the `checks` array,
- * not a single fact owned by the entity itself. */
+ * scoped to that one spawnEntities()/spawnDerivedEntities() call (its index within the
+ * spawned array). `attrs` holds the spawned object's own enumerable primitive-valued
+ * properties only (see spawnEntities's doc comment). There is deliberately no `kept`
+ * flag here (unlike ElementRecord) -- an entity can flow into more than one later
+ * filter stage over its lifetime, so "was it kept" is a per-stage question answered by
+ * the `checks` array, not a single fact owned by the entity itself.
+ *
+ * `parentId` is optional and set ONLY by spawnDerivedEntities -- an ordinary
+ * spawnEntities() entity (the "plain array" `@toph entities` shape) never has one, the
+ * same "omit rather than record a sentinel" convention TraceRun.pipeline/assets/entities
+ * already use. When present, it is the id of the entity `entityIdByRef` recognized as
+ * this entity's SOURCE object at spawn time (see spawnDerivedEntities's doc comment) --
+ * a single link, not a lineage chain: an entity derived from a derived entity would need
+ * its OWN parentId lookup at ITS OWN spawn time to go any further back, this field never
+ * grows into an array or gets walked automatically. */
 export interface EntityRecord {
 	id: number;
 	kindId: number;
 	ordinal: number;
 	attrs: Record<string, number | string | boolean>;
+	parentId?: number;
 }
 
 /** The full accumulated output of one trace session. Always a plain, JSON-serializable
@@ -358,30 +368,73 @@ function copyPrimitiveAttrs(value: unknown): Record<string, number | string | bo
 	return attrs;
 }
 
-/** Spawns one stable entity per element of `elements`, in array order. For each element
- * (in order): allocates a fresh entity id; if the element is a non-null object,
- * registers it in an internal WeakMap from that exact object reference to this entity
- * id (so a LATER enterElement(stageInvocationId, ref) call passing the SAME reference
- * recovers the SAME id -- see enterElement); copies the element's own enumerable
- * primitive-valued (number/string/boolean) properties into an `attrs` record, silently
- * skipping anything else (nested objects/arrays/functions); and pushes an entity record
- * `{id, kindId, ordinal, attrs}` (ordinal = the element's index in `elements`) into the
- * session. Returns the newly-allocated ids, in the same order as `elements`.
+/** Builds and registers exactly one entity record: allocates a fresh entity id; if `el`
+ * is a non-null object, registers it in `session.entityIdByRef` from that exact object
+ * reference to this entity id (so a LATER enterElement(stageInvocationId, ref) call --
+ * or a LATER spawnDerivedEntities() parent lookup -- passing the SAME reference recovers
+ * the SAME id); copies `el`'s own enumerable primitive-valued (number/string/boolean)
+ * properties into an `attrs` record, silently skipping anything else (nested
+ * objects/arrays/functions); attaches `parentId` iff one was passed; and pushes the
+ * finished record into `session.entities`. Returns the finished record (its `id` is what
+ * callers collect). Shared by spawnEntities (no parentId) and spawnDerivedEntities (a
+ * parentId resolved by the caller before this is called) so both stay in exact lockstep
+ * on id allocation, WeakMap registration, and attrs extraction. */
+function spawnOneEntity(session: Session, kindId: number, el: unknown, ordinal: number, parentId?: number): EntityRecord {
+	const id = session.nextEntityId++;
+	if (el !== null && typeof el === 'object') {
+		session.entityIdByRef.set(el, id);
+	}
+	const record: EntityRecord = { id, kindId, ordinal, attrs: copyPrimitiveAttrs(el) };
+	if (parentId !== undefined) record.parentId = parentId;
+	session.entities.push(record);
+	return record;
+}
+
+/** Spawns one stable entity per element of `elements`, in array order -- see
+ * spawnOneEntity for exactly what each spawned entity gets. Returns the newly-allocated
+ * ids, in the same order as `elements`.
  *
  * Valid to call with zero later consumption -- nothing here depends on any subsequent
  * enterElement() call ever looking a spawned entity back up. */
 export function spawnEntities(kindId: number, elements: readonly unknown[]): number[] {
 	const session = requireSession('spawnEntities');
-	const ids: number[] = [];
-	elements.forEach((el, ordinal) => {
-		const id = session.nextEntityId++;
-		if (el !== null && typeof el === 'object') {
-			session.entityIdByRef.set(el, id);
-		}
-		session.entities.push({ id, kindId, ordinal, attrs: copyPrimitiveAttrs(el) });
-		ids.push(id);
+	return elements.map((el, ordinal) => spawnOneEntity(session, kindId, el, ordinal).id);
+}
+
+/** Spawns one stable entity per element of `elements`, IN THE SAME WAY spawnEntities
+ * does (same id allocation, same WeakMap registration of `elements[i]` itself, same
+ * attrs extraction -- see spawnOneEntity), but additionally links each spawned entity to
+ * the entity (if any) that `parents[i]` was already known as.
+ *
+ * This exists for a `.map()`-derived `@toph entities` site: `elements[i]` is a BRAND NEW
+ * object (e.g. one `.map()` callback invocation's return value) that is NOT the same
+ * reference as `parents[i]` (the object the callback was invoked with) -- so plain
+ * reference-identity (what spawnEntities/enterElement rely on) cannot link them. Instead,
+ * for each index `i`: `parents[i]` is looked up in the SAME `session.entityIdByRef`
+ * WeakMap spawnEntities/enterElement already populate and consult (not a second,
+ * separate map) -- if `parents[i]` was itself spawned (or re-spawned, e.g. by an earlier
+ * spawnDerivedEntities call) as an entity earlier in the CURRENT session, that id becomes
+ * `elements[i]`'s new entity's `parentId`. If `parents[i]` has no known entity id (a
+ * legitimate, non-error case -- e.g. this is called on data that was never spawned
+ * upstream), the new entity simply has no `parentId` (omitted, never `0`/`null`).
+ *
+ * `elements` and `parents` must be the same length, in corresponding order (index `i` in
+ * `elements` was derived FROM index `i` in `parents`) -- true by construction for a
+ * `.map()` callback's output against its receiver, which is the only shape the compiler
+ * generates a call like this for. Returns the newly-allocated ids, in the same order as
+ * `elements`. */
+export function spawnDerivedEntities(
+	kindId: number,
+	elements: readonly unknown[],
+	parents: readonly unknown[]
+): number[] {
+	const session = requireSession('spawnDerivedEntities');
+	return elements.map((el, ordinal) => {
+		const parent = parents[ordinal];
+		const parentId =
+			parent !== null && typeof parent === 'object' ? session.entityIdByRef.get(parent) : undefined;
+		return spawnOneEntity(session, kindId, el, ordinal, parentId).id;
 	});
-	return ids;
 }
 
 /** Snapshots `ref`'s CURRENT bytes -- a real copy, not a reference -- into the active

@@ -405,7 +405,11 @@ export function validateFile(sourceFile: ts.SourceFile): ValidateFileResult {
 // emitWrapSite. A single statement may carry both at once (a `@toph snapshot` and a
 // `@toph entities` directive on the same `const <ident> = <expr>;` declaration is the
 // task's own real-target shape), which is exactly why findLeadingDirectives (plural) is
-// needed here instead of findLeadingDirective.
+// needed here instead of findLeadingDirective. The one exception to "leaving the
+// statement's own text untouched" is `ValidEntitiesMapSite` below (the `.map()`-derived
+// `@toph entities` shape): its host statement's initializer genuinely has to change (the
+// `.map()` receiver becomes a generated temp binding, evaluated exactly once) -- see that
+// interface's doc comment and codegen.ts's emitWrapSite for why and how.
 //
 // Because "snapshot"/"entities" are now recognized verbs in directives.ts's DIRECTIVE_RE,
 // validateFile's own TOPH105 stray-malformed-comment pass above never fires for a
@@ -430,7 +434,11 @@ export interface ValidSnapshotSite {
 
 export type SnapshotSiteRecord = { valid: true; site: ValidSnapshotSite } | { valid: false };
 
-export interface ValidEntitiesSite {
+/** The already-working "plain array" `@toph entities` host shape: `const <ident> =
+ * <expr>;` for ANY expression -- codegen just calls spawnEntities(kindId, <ident>)
+ * immediately after the statement, unmodified. */
+export interface ValidEntitiesArraySite {
+	shape: 'array';
 	node: ts.Statement;
 	kindName: string;
 	/** The `const <ident>` being declared -- the array `spawnEntities` iterates. */
@@ -438,7 +446,61 @@ export interface ValidEntitiesSite {
 	sourceLine: number;
 }
 
+/** The `.map()`-derived `@toph entities` host shape: `const <ident> = <arrayExpr>.map((
+ * <param>) => (<objectExpr>));` -- a `.map()` call whose callback takes exactly one
+ * parameter and returns an object (expression body, or a block body with a single
+ * `return <expr>;`). This is what lets an entity spawned from `<arrayExpr>`'s OWN
+ * elements earlier in the pipeline stay linked to the brand-new object each callback
+ * invocation returns, via spawnDerivedEntities's `parentId` (src/runtime/index.ts) --
+ * see codegen.ts's emitWrapSite for how `receiverExprText` is evaluated into a fresh
+ * generated temp binding exactly once, then used BOTH as the `.map()` receiver and as
+ * spawnDerivedEntities's `parents` argument. */
+export interface ValidEntitiesMapSite {
+	shape: 'map';
+	node: ts.Statement;
+	kindName: string;
+	/** The `const <ident>` being declared -- the array `spawnDerivedEntities` iterates as
+	 * its `elements` argument. */
+	resultIdent: string;
+	/** Original source text of the `.map()` receiver expression (e.g.
+	 * "sortComponents(teeComponents)") -- must be evaluated exactly once, via a generated
+	 * temp binding, never re-spliced verbatim a second time. */
+	receiverExprText: string;
+	/** Raw source text of the ENTIRE map callback (the arrow function, parameter list
+	 * through body), copied verbatim -- codegen must not alter it at all, only redirect
+	 * what receiver it's `.map()`-called on. */
+	callbackText: string;
+	sourceLine: number;
+}
+
+export type ValidEntitiesSite = ValidEntitiesArraySite | ValidEntitiesMapSite;
+
 export type EntitiesSiteRecord = { valid: true; site: ValidEntitiesSite } | { valid: false };
+
+/** Unwraps any number of parenthesization layers, e.g. `((x))` -> `x`. TypeScript's AST
+ * keeps ParenthesizedExpression as a real node (unlike some parsers, which discard
+ * grouping parens outright) -- an object-literal arrow body like `(p) => ({ x: 1 })`
+ * MUST be parenthesized (bare `{` would parse as a block), so this unwrap is required to
+ * see the ObjectLiteralExpression underneath. */
+function unwrapParens(expr: ts.Expression): ts.Expression {
+	let e = expr;
+	while (ts.isParenthesizedExpression(e)) e = e.expression;
+	return e;
+}
+
+/** Extracts the expression a `.map()` callback's body evaluates to, supporting both
+ * forms the task allows: a bare expression body (`(p) => (<expr>)`) or a block body
+ * whose ONLY statement is `return <expr>;`. Returns null for anything else (an empty
+ * block, more than one statement, a bare `return;` with no expression, ...) -- callers
+ * treat null as "doesn't qualify for the map shape," not as a shape to guess at. */
+function extractMapCallbackReturnExpr(arrow: ts.ArrowFunction): ts.Expression | null {
+	if (!ts.isBlock(arrow.body)) return unwrapParens(arrow.body);
+	const stmts = arrow.body.statements;
+	if (stmts.length !== 1) return null;
+	const [stmt] = stmts;
+	if (!ts.isReturnStatement(stmt) || !stmt.expression) return null;
+	return unwrapParens(stmt.expression);
+}
 
 export interface ValidateAssetsAndEntitiesResult {
 	snapshotRecords: SnapshotSiteRecord[];
@@ -488,24 +550,45 @@ function validateEntitiesSite(
 		return null;
 	}
 
-	const shapeError = `@toph entities "${kindName}" must be attached to a "const <ident> = <expr>;" statement.`;
-	if (!ts.isVariableStatement(node)) {
+	// Verbatim-mentions-both-shapes message per the task spec -- every TOPH107 this
+	// function raises below reuses it, so whichever shape an author was reaching for, the
+	// error tells them what both supported shapes actually look like.
+	const shapeError = `@toph entities "${kindName}" must be attached to either a "const <ident> = <expr>;" statement, or a "const <ident> = <arrayExpr>.map((<param>) => (<objectExpr>));" statement whose callback takes exactly one parameter and returns an object.`;
+	const fail = (): null => {
 		diagnostics.push(diagnosticAtNode('TOPH107', shapeError, sourceFile, node));
 		return null;
-	}
+	};
+
+	if (!ts.isVariableStatement(node)) return fail();
 	const declList = node.declarationList;
-	if (!(declList.flags & ts.NodeFlags.Const) || declList.declarations.length !== 1) {
-		diagnostics.push(diagnosticAtNode('TOPH107', shapeError, sourceFile, node));
-		return null;
-	}
+	if (!(declList.flags & ts.NodeFlags.Const) || declList.declarations.length !== 1) return fail();
 	const decl = declList.declarations[0];
-	if (!ts.isIdentifier(decl.name) || !decl.initializer) {
-		diagnostics.push(diagnosticAtNode('TOPH107', shapeError, sourceFile, node));
-		return null;
+	if (!ts.isIdentifier(decl.name) || !decl.initializer) return fail();
+
+	const resultIdent = decl.name.text;
+	const sourceLine = lineOf(sourceFile, node.getStart(sourceFile));
+	const init = decl.initializer;
+
+	// A `.map()` call as the initializer is unambiguously an attempt at the derived-entity
+	// shape -- once the initializer is recognized as a `.map()` call, it must fully
+	// conform (exactly one parameter, object-returning body) or it's TOPH107; it never
+	// silently falls back to the plain-array shape below, which would spawn entities from
+	// the map's OUTPUT with no parent link at all -- a shape that looks like it was
+	// reaching for identity-preservation and would otherwise silently not get it.
+	if (ts.isCallExpression(init) && ts.isPropertyAccessExpression(init.expression) && init.expression.name.text === 'map') {
+		if (init.arguments.length !== 1 || !ts.isArrowFunction(init.arguments[0])) return fail();
+		const arrow = init.arguments[0] as ts.ArrowFunction;
+		if (arrow.parameters.length !== 1 || !ts.isIdentifier(arrow.parameters[0].name)) return fail();
+
+		const returnExpr = extractMapCallbackReturnExpr(arrow);
+		if (returnExpr === null || !ts.isObjectLiteralExpression(returnExpr)) return fail();
+
+		const receiverExprText = sliceNode(sourceFile, init.expression.expression);
+		const callbackText = sliceNode(sourceFile, arrow);
+		return { shape: 'map', node, kindName, resultIdent, receiverExprText, callbackText, sourceLine };
 	}
 
-	const sourceLine = lineOf(sourceFile, node.getStart(sourceFile));
-	return { node, kindName, resultIdent: decl.name.text, sourceLine };
+	return { shape: 'array', node, kindName, resultIdent, sourceLine };
 }
 
 /**

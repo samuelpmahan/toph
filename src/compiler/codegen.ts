@@ -134,6 +134,17 @@ export function generateTraceCode(
 	const builder = new LineTrackingBuilder();
 	builder.append('import * as __toph from "toph";\n\n');
 
+	// Local-only counter for the `.map()`-derived `@toph entities` shape's generated temp
+	// binding names (`__toph_derive_<n>`). Deliberately NOT threaded through IdAllocator --
+	// it names a purely-generated-code-local variable, not a manifest entry id, so it has
+	// no business in the manifest id space (see IdAllocator in types.ts / this task's
+	// "check this claim rather than assuming it" note on the manifest). A running counter
+	// scoped to one generateTraceCode call is enough to guarantee uniqueness: two map-shape
+	// sites sharing the same *entity kind* (and therefore the same entityKindId) would
+	// otherwise collide on a shared temp-variable name if the suffix came from entityKindId
+	// instead.
+	let nextDeriveTempSuffix = 1;
+
 	let cursor = 0;
 	for (const edit of edits) {
 		const nodeStart = edit.node.getFullStart();
@@ -151,7 +162,17 @@ export function generateTraceCode(
 		if (edit.kind === 'filter') {
 			emitFilterSite(builder, edit.filter, ids, fileName, stages, checks);
 		} else {
-			emitWrapSite(builder, edit.wrap, ids, fileName, source, assets, entityKinds, entityKindIdByName);
+			emitWrapSite(
+				builder,
+				edit.wrap,
+				ids,
+				fileName,
+				source,
+				assets,
+				entityKinds,
+				entityKindIdByName,
+				() => nextDeriveTempSuffix++
+			);
 		}
 
 		cursor = edit.node.getEnd();
@@ -164,11 +185,23 @@ export function generateTraceCode(
 /**
  * Emits a `@toph snapshot` / `@toph entities` wrap site: unlike a filter site, the
  * annotated statement's own text is preserved verbatim (its right-hand side is never
- * touched) -- only a `snapshotRaster` call immediately before and/or a `spawnEntities`
- * call immediately after are inserted. The statement's own leading directive comment(s)
- * are dropped the same way a filter site's are: generateTraceCode's caller already
- * skipped past the node's full leading-trivia span (getFullStart() -> getStart()) via
- * the "between" splice above, so slicing from getStart() here naturally excludes them.
+ * touched) for every shape EXCEPT the `.map()`-derived `@toph entities` shape (see
+ * below) -- only a `snapshotRaster` call immediately before and/or a `spawnEntities` /
+ * `spawnDerivedEntities` call immediately after are inserted. The statement's own
+ * leading directive comment(s) are dropped the same way a filter site's are:
+ * generateTraceCode's caller already skipped past the node's full leading-trivia span
+ * (getFullStart() -> getStart()) via the "between" splice above, so slicing from
+ * getStart() here naturally excludes them.
+ *
+ * For the `.map()`-derived shape (`wrap.entities.shape === 'map'`), the statement's own
+ * text is NOT spliced verbatim -- its `.map()` receiver expression is evaluated exactly
+ * once into a fresh generated `const __toph_derive_<n>` immediately before it (see
+ * ValidEntitiesMapSite's doc comment in validate.ts for why re-splicing it a second time
+ * would violate the project's exactly-once evaluation guarantee), and the statement
+ * itself is rewritten to call `.map()` on that temp binding instead -- with the callback
+ * argument copied verbatim, untouched, exactly as written. `nextDeriveTempSuffix` names
+ * that temp binding uniquely within this one compile (see generateTraceCode's own doc
+ * comment on it for why it's a local counter, not an IdAllocator id).
  */
 function emitWrapSite(
 	builder: LineTrackingBuilder,
@@ -178,7 +211,8 @@ function emitWrapSite(
 	source: string,
 	assets: InternalAssetManifestEntry[],
 	entityKinds: InternalEntityKindManifestEntry[],
-	entityKindIdByName: Map<string, number>
+	entityKindIdByName: Map<string, number>,
+	nextDeriveTempSuffix: () => number
 ): void {
 	if (wrap.snapshot) {
 		const s = wrap.snapshot;
@@ -197,8 +231,25 @@ function emitWrapSite(
 		});
 	}
 
-	const stmtText = source.slice(wrap.node.getStart(), wrap.node.getEnd());
-	builder.append(`${stmtText}\n`);
+	// The temp binding's name, set below ONLY when wrap.entities is the map shape --
+	// spawnDerivedEntities's `parents` argument (emitted further down) reads it back.
+	let deriveTempIdent: string | null = null;
+
+	if (wrap.entities && wrap.entities.shape === 'map') {
+		const e = wrap.entities;
+		deriveTempIdent = `__toph_derive_${nextDeriveTempSuffix()}`;
+		// Evaluate the receiver EXACTLY ONCE -- this is the one binding both the `.map()`
+		// call below and spawnDerivedEntities's `parents` argument read from, never the
+		// original `receiverExprText` spliced a second time.
+		builder.append(`const ${deriveTempIdent} = ${e.receiverExprText};\n`);
+		// The callback argument is copied verbatim (e.callbackText) -- its own logic is
+		// completely untouched, exactly like a `@toph filter` site never touches its
+		// callback's check-group logic.
+		builder.append(`const ${e.resultIdent} = ${deriveTempIdent}.map(${e.callbackText});\n`);
+	} else {
+		const stmtText = source.slice(wrap.node.getStart(), wrap.node.getEnd());
+		builder.append(`${stmtText}\n`);
+	}
 
 	if (wrap.entities) {
 		const e = wrap.entities;
@@ -214,7 +265,11 @@ function emitWrapSite(
 				generatedLine: builder.currentLine(),
 			});
 		}
-		builder.append(`__toph.spawnEntities(${entityKindId}, ${e.resultIdent});\n`);
+		if (e.shape === 'map') {
+			builder.append(`__toph.spawnDerivedEntities(${entityKindId}, ${e.resultIdent}, ${deriveTempIdent});\n`);
+		} else {
+			builder.append(`__toph.spawnEntities(${entityKindId}, ${e.resultIdent});\n`);
+		}
 	}
 }
 

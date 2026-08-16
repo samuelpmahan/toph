@@ -154,6 +154,109 @@ describe('spawnEntities', () => {
 	});
 });
 
+describe('spawnDerivedEntities', () => {
+	it('links a derived entity to its parent via parentId when the parent was previously spawned', () => {
+		toph.startTrace();
+		const parentObj = { area: 5 };
+		const [parentId] = toph.spawnEntities(1, [parentObj]);
+		const derivedObj = { x: 1 }; // a BRAND NEW object, not the same reference as parentObj
+		const [derivedId] = toph.spawnDerivedEntities(2, [derivedObj], [parentObj]);
+		const run = toph.finishTrace();
+
+		expect(derivedId).not.toBe(parentId);
+		const derivedRecord = run.entities!.find((e) => e.id === derivedId)!;
+		expect(derivedRecord.parentId).toBe(parentId);
+		expect(derivedRecord.kindId).toBe(2);
+		expect(derivedRecord.attrs).toEqual({ x: 1 });
+	});
+
+	it('omits parentId (not 0, not null) when the parent was never spawned -- a legitimate, non-error case', () => {
+		toph.startTrace();
+		const neverSpawnedParent = { area: 5 };
+		const derivedObj = { x: 1 };
+		const [derivedId] = toph.spawnDerivedEntities(2, [derivedObj], [neverSpawnedParent]);
+		const run = toph.finishTrace();
+
+		const derivedRecord = run.entities!.find((e) => e.id === derivedId)!;
+		expect('parentId' in derivedRecord).toBe(false);
+		expect(JSON.stringify(derivedRecord)).not.toContain('parentId');
+	});
+
+	it('spawnEntities-produced entities NEVER carry a parentId field at all', () => {
+		toph.startTrace();
+		toph.spawnEntities(1, [{ a: 1 }]);
+		const run = toph.finishTrace();
+		expect('parentId' in run.entities![0]).toBe(false);
+	});
+
+	it('one call links each element to ITS OWN corresponding parent by index, not a shared/first one', () => {
+		toph.startTrace();
+		const parentA = { n: 'a' };
+		const parentB = { n: 'b' };
+		const [parentIdA, parentIdB] = toph.spawnEntities(1, [parentA, parentB]);
+		const derivedA = { m: 'a' };
+		const derivedB = { m: 'b' };
+		const [derivedIdA, derivedIdB] = toph.spawnDerivedEntities(2, [derivedA, derivedB], [parentA, parentB]);
+		const run = toph.finishTrace();
+
+		expect(run.entities!.find((e) => e.id === derivedIdA)!.parentId).toBe(parentIdA);
+		expect(run.entities!.find((e) => e.id === derivedIdB)!.parentId).toBe(parentIdB);
+	});
+
+	it('a derived entity is ITSELF registered in the identity map -- a later stage consuming its exact reference resolves to the SAME id (transitive identity)', () => {
+		toph.startTrace();
+		const parentObj = { area: 5 };
+		toph.spawnEntities(1, [parentObj]);
+		const derivedObj = { x: 1 };
+		const [derivedId] = toph.spawnDerivedEntities(2, [derivedObj], [parentObj]);
+
+		const s = toph.enterStage(1);
+		const resolvedId = toph.enterElement(s, derivedObj);
+		expect(resolvedId).toBe(derivedId);
+
+		const run = toph.finishTrace();
+		// The entity-identity path was used (not a fresh ordinal) -- no new record in the
+		// public `elements` array.
+		expect(run.elements).toEqual([]);
+	});
+
+	it('reuses the exact same session-global identity WeakMap spawnEntities/enterElement use -- a parent re-spawned as a DIFFERENT entity later resolves to the LATER spawn, not the first', () => {
+		toph.startTrace();
+		const obj = { area: 5 };
+		const [firstId] = toph.spawnEntities(1, [obj]);
+		const [secondId] = toph.spawnEntities(1, [obj]); // same object, re-spawned -- overwrites the WeakMap entry
+		expect(secondId).not.toBe(firstId);
+
+		const derivedObj = { x: 1 };
+		const [derivedId] = toph.spawnDerivedEntities(2, [derivedObj], [obj]);
+		const run = toph.finishTrace();
+		expect(run.entities!.find((e) => e.id === derivedId)!.parentId).toBe(secondId);
+	});
+
+	it('elements and parents of length zero: returns an empty array and records nothing', () => {
+		toph.startTrace();
+		const ids = toph.spawnDerivedEntities(1, [], []);
+		expect(ids).toEqual([]);
+		const run = toph.finishTrace();
+		expect('entities' in run).toBe(false);
+	});
+
+	it('throws the same no-active-session error style as spawnEntities when called with no active session', () => {
+		expect(() => toph.spawnDerivedEntities(1, [{ x: 1 }], [{ area: 1 }])).toThrow(
+			/toph: spawnDerivedEntities\(\).*no active trace session/i
+		);
+	});
+
+	it('non-object parents (primitives, null) are treated as "no known parent" without throwing', () => {
+		toph.startTrace();
+		const ids = toph.spawnDerivedEntities(1, [{ x: 1 }, { x: 2 }, { x: 3 }], [42, null, 'hello']);
+		const run = toph.finishTrace();
+		for (const id of ids) {
+			expect('parentId' in run.entities!.find((e) => e.id === id)!).toBe(false);
+		}
+	});
+});
+
 describe('enterElement(stageInvocationId, ref): entity-identity reuse', () => {
 	it('a ref that was spawned returns the SAME id every time it is passed again, within the session', () => {
 		toph.startTrace();
