@@ -1,0 +1,932 @@
+diff --git a/scripts/probe-autocrop-frames.ts b/scripts/probe-autocrop-frames.ts
+new file mode 100644
+index 0000000..af360c3
+--- /dev/null
++++ b/scripts/probe-autocrop-frames.ts
+@@ -0,0 +1,52 @@
++import { readFileSync } from 'node:fs';
++import { extname } from 'node:path';
++import jpeg from 'jpeg-js';
++import { PNG } from 'pngjs';
++import { proposeSingleImageCrop } from '../src/lib/stitch/autoCrop';
++
++/** One-off: does the production single-image autocrop reproduce the frame each corpus annotation was made in? */
++const pairs: readonly { name: string; image: string; annotation: string }[] = JSON.parse(
++	readFileSync(process.argv[2], 'utf8')
++);
++
++for (const pair of pairs) {
++	const bytes = new Uint8Array(readFileSync(pair.image));
++	const ext = extname(pair.image).toLowerCase();
++	const decoded =
++		ext === '.png'
++			? (() => {
++					const png = PNG.sync.read(Buffer.from(bytes));
++					return { rgba: new Uint8Array(png.data), width: png.width, height: png.height };
++				})()
++			: (() => {
++					const jpg = jpeg.decode(Buffer.from(bytes), { useTArray: true });
++					return { rgba: new Uint8Array(jpg.data), width: jpg.width, height: jpg.height };
++				})();
++	const gray = new Uint8Array(decoded.width * decoded.height);
++	for (let pixel = 0, offset = 0; pixel < gray.length; pixel += 1, offset += 4) {
++		gray[pixel] =
++			(decoded.rgba[offset] * 0.299 +
++				decoded.rgba[offset + 1] * 0.587 +
++				decoded.rgba[offset + 2] * 0.114 +
++				0.5) |
++			0;
++	}
++	const proposal = proposeSingleImageCrop({
++		widthPx: decoded.width,
++		heightPx: decoded.height,
++		gray,
++		scale: 1
++	});
++	const annotation = JSON.parse(readFileSync(pair.annotation, 'utf8')) as {
++		sourceImage?: { widthPx?: number; heightPx?: number };
++	};
++	const expectedHeight = annotation.sourceImage?.heightPx ?? null;
++	const croppedHeight = proposal.insets
++		? decoded.height - proposal.insets.topPx - proposal.insets.bottomPx
++		: decoded.height;
++	console.log(
++		`${pair.name}: raw ${decoded.width}x${decoded.height} -> insets ${JSON.stringify(proposal.insets)} ` +
++			`(${proposal.confidence}) croppedHeight=${croppedHeight} annotationExpects=${expectedHeight} ` +
++			(expectedHeight === croppedHeight ? 'MATCH' : 'MISMATCH')
++	);
++}
+diff --git a/scripts/profile-click-snap.ts b/scripts/profile-click-snap.ts
+new file mode 100644
+index 0000000..6a4efff
+--- /dev/null
++++ b/scripts/profile-click-snap.ts
+@@ -0,0 +1,418 @@
++import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
++import { basename, extname, join, resolve } from 'node:path';
++import jpeg from 'jpeg-js';
++import { PNG } from 'pngjs';
++import { loadCv } from '../src/lib/stitch/cvMatch';
++import { detectCalibratedHoleNumberBadges } from '../src/lib/autoAnnotation/cvCalibratedDetectors';
++import {
++	deriveBasketTemplateScale,
++	deriveUDiscCalibration,
++	validateCvTemplateManifest
++} from '../src/lib/autoAnnotation/cvCalibration';
++import type { CvTemplateManifest } from '../src/lib/autoAnnotation/cvCalibration';
++import type { BasketCv, BasketTemplateRaster } from '../src/lib/autoAnnotation/basketTemplateDetection';
++import type { TeePadCv } from '../src/lib/autoAnnotation/teePadDetection';
++import type { HoleNumberCvModule, HoleNumberTemplate } from '../src/lib/autoAnnotation/holeNumberDetection';
++import { proposeSingleImageCrop } from '../src/lib/stitch/autoCrop';
++import { localFeatureSnap } from '../src/lib/cv/localSnap';
++import type { LocalSnapCalibration, LocalSnapKind, LocalSnapRaster } from '../src/lib/cv/localSnap';
++import { createTrace } from '../src/lib/toph/record';
++import type { TophEvent } from '../src/lib/toph/trace';
++
++/**
++ * Toph-instrumented clickSnap (localFeatureSnap) profiler.
++ *
++ * For every annotated corpus course, simulates user clicks at each hole's
++ * ground-truth tee/basket center plus rings of offset clicks, runs the exact
++ * production snap path (calibration derived from the image's own number-badge
++ * anchor, exactly like `basketDetection.worker.ts`'s `detectLocalSnap`), and
++ * reports: did the snap fire, where did it land relative to ground truth, and
++ * — when it didn't fire — which named gate rejected it (from the Toph trace,
++ * not inference).
++ *
++ * Usage:
++ *   npx tsx scripts/profile-click-snap.ts --corpus <dir with <Course>/<Course>-full.* + .annotation.json> --out <dir>
++ */
++
++interface DecodedRaster {
++	readonly rgba: Uint8Array;
++	readonly widthPx: number;
++	readonly heightPx: number;
++}
++
++interface TruthObject {
++	readonly holeNumber: number;
++	readonly kind: LocalSnapKind;
++	readonly xPx: number;
++	readonly yPx: number;
++}
++
++interface ClickResult {
++	readonly holeNumber: number;
++	readonly kind: LocalSnapKind;
++	readonly offsetXPx: number;
++	readonly offsetYPx: number;
++	readonly clickErrorPx: number;
++	readonly snapped: boolean;
++	readonly snapErrorPx: number | null;
++	readonly movedPx: number | null;
++	readonly rejectedAt: string | null;
++	readonly bestScore: number | null;
++	readonly candidateCount: number | null;
++}
++
++const OFFSET_RADII_PX = [4, 8, 12, 16, 20];
++const OFFSET_DIRECTIONS = 8;
++
++function decodeRaster(bytes: Uint8Array, fileName: string): DecodedRaster {
++	const extension = extname(fileName).toLowerCase();
++	if (extension === '.png') {
++		const decoded = PNG.sync.read(Buffer.from(bytes));
++		return { rgba: new Uint8Array(decoded.data), widthPx: decoded.width, heightPx: decoded.height };
++	}
++	if (extension === '.jpg' || extension === '.jpeg') {
++		const decoded = jpeg.decode(Buffer.from(bytes), { useTArray: true });
++		return { rgba: new Uint8Array(decoded.data), widthPx: decoded.width, heightPx: decoded.height };
++	}
++	throw new Error(`Unsupported image format '${extension}'.`);
++}
++
++function toGray(raster: DecodedRaster): Uint8Array {
++	const gray = new Uint8Array(raster.widthPx * raster.heightPx);
++	for (let pixel = 0, offset = 0; pixel < gray.length; pixel += 1, offset += 4) {
++		gray[pixel] =
++			(raster.rgba[offset] * 0.299 +
++				raster.rgba[offset + 1] * 0.587 +
++				raster.rgba[offset + 2] * 0.114 +
++				0.5) |
++			0;
++	}
++	return gray;
++}
++
++function loadValidatedTemplateManifest(templateDir: string): CvTemplateManifest {
++	const manifestPath = join(resolve(templateDir), 'manifest.json');
++	return validateCvTemplateManifest(JSON.parse(readFileSync(manifestPath, 'utf8')));
++}
++
++function loadNumberTemplates(
++	templateDir: string,
++	manifest: CvTemplateManifest
++): readonly HoleNumberTemplate[] {
++	return manifest.templates.holeNumbers.map((fileName, index) => {
++		const path = join(resolve(templateDir), fileName);
++		const decoded = decodeRaster(new Uint8Array(readFileSync(path)), path);
++		return {
++			label: index + 1,
++			raster: { format: 'rgba', widthPx: decoded.widthPx, heightPx: decoded.heightPx, data: decoded.rgba }
++		};
++	});
++}
++
++function loadBasketTemplate(templateDir: string, manifest: CvTemplateManifest): BasketTemplateRaster {
++	const path = join(resolve(templateDir), manifest.templates.basket);
++	const decoded = decodeRaster(new Uint8Array(readFileSync(path)), path);
++	return { gray: toGray(decoded), widthPx: decoded.widthPx, heightPx: decoded.heightPx };
++}
++
++/**
++ * Reproduces the frame a corpus annotation was made in. Several corpus
++ * courses ship the raw phone screenshot while the annotation coordinates are
++ * in the post-autocrop frame (annotation `sourceImage.heightPx` differs from
++ * the shipped image); the production single-image autocrop regenerates that
++ * frame exactly (verified: Lenard 429/278, TowneLake 532/252, Heritage
++ * 429/252 all reproduce the annotated height). Returns the raster unchanged
++ * when the annotation frame already matches.
++ */
++function toAnnotationFrame(
++	image: DecodedRaster,
++	annotationPath: string
++): { raster: DecodedRaster; note: string } {
++	const parsed = JSON.parse(readFileSync(annotationPath, 'utf8')) as {
++		sourceImage?: { widthPx?: number; heightPx?: number };
++	};
++	const expectedWidth = parsed.sourceImage?.widthPx;
++	const expectedHeight = parsed.sourceImage?.heightPx;
++	if (
++		typeof expectedHeight !== 'number' ||
++		expectedHeight === image.heightPx ||
++		expectedWidth !== image.widthPx
++	) {
++		return { raster: image, note: 'annotation frame matches shipped image' };
++	}
++	const gray = toGray(image);
++	const proposal = proposeSingleImageCrop({
++		widthPx: image.widthPx,
++		heightPx: image.heightPx,
++		gray,
++		scale: 1
++	});
++	if (!proposal.insets) {
++		throw new Error(`Annotation frame is ${expectedWidth}x${expectedHeight} but autocrop proposed nothing.`);
++	}
++	const { topPx, bottomPx } = proposal.insets;
++	const croppedHeight = image.heightPx - topPx - bottomPx;
++	if (croppedHeight !== expectedHeight) {
++		throw new Error(
++			`Autocrop produced height ${croppedHeight}, annotation expects ${expectedHeight} — refusing to guess.`
++		);
++	}
++	const rgba = new Uint8Array(image.widthPx * croppedHeight * 4);
++	rgba.set(image.rgba.subarray(topPx * image.widthPx * 4, (topPx + croppedHeight) * image.widthPx * 4));
++	return {
++		raster: { rgba, widthPx: image.widthPx, heightPx: croppedHeight },
++		note: `autocropped top=${topPx} bottom=${bottomPx} to match annotation frame`
++	};
++}
++
++/** Both corpus annotation schemas: bare {course, holes} and schemaVersion-1 {sourceImage, holes}. */
++function loadTruth(annotationPath: string): readonly TruthObject[] {
++	const parsed = JSON.parse(readFileSync(annotationPath, 'utf8')) as {
++		holes?: readonly {
++			number?: number;
++			tee?: { xPx?: number; yPx?: number };
++			basket?: { xPx?: number; yPx?: number };
++		}[];
++	};
++	const objects: TruthObject[] = [];
++	for (const hole of parsed.holes ?? []) {
++		if (typeof hole.number !== 'number') continue;
++		for (const kind of ['tee', 'basket'] as const) {
++			const point = hole[kind];
++			if (typeof point?.xPx === 'number' && typeof point?.yPx === 'number') {
++				objects.push({ holeNumber: hole.number, kind, xPx: point.xPx, yPx: point.yPx });
++			}
++		}
++	}
++	return objects;
++}
++
++function clickOffsets(): readonly { readonly dx: number; readonly dy: number }[] {
++	const offsets: { dx: number; dy: number }[] = [{ dx: 0, dy: 0 }];
++	for (const radius of OFFSET_RADII_PX) {
++		for (let step = 0; step < OFFSET_DIRECTIONS; step += 1) {
++			const angle = (2 * Math.PI * step) / OFFSET_DIRECTIONS;
++			offsets.push({
++				dx: Number((radius * Math.cos(angle)).toFixed(2)),
++				dy: Number((radius * Math.sin(angle)).toFixed(2))
++			});
++		}
++	}
++	return offsets;
++}
++
++function quantile(sorted: readonly number[], q: number): number | null {
++	if (sorted.length === 0) return null;
++	const index = Math.min(sorted.length - 1, Math.floor(q * sorted.length));
++	return Number(sorted[index].toFixed(2));
++}
++
++function summarize(results: readonly ClickResult[]) {
++	const snapped = results.filter((result) => result.snapped);
++	const snapErrors = snapped
++		.map((result) => result.snapErrorPx!)
++		.sort((left, right) => left - right);
++	const rejectedCounts: Record<string, number> = {};
++	for (const result of results) {
++		if (!result.snapped && result.rejectedAt) {
++			rejectedCounts[result.rejectedAt] = (rejectedCounts[result.rejectedAt] ?? 0) + 1;
++		}
++	}
++	const worseCount = snapped.filter((result) => result.snapErrorPx! > result.clickErrorPx + 0.5).length;
++	return {
++		clicks: results.length,
++		snapRate: results.length === 0 ? null : Number((snapped.length / results.length).toFixed(3)),
++		snapErrorMedianPx: quantile(snapErrors, 0.5),
++		snapErrorP90Px: quantile(snapErrors, 0.9),
++		snapErrorMaxPx: quantile(snapErrors, 1),
++		snappedWorseThanRawClick: worseCount,
++		rejections: rejectedCounts
++	};
++}
++
++interface CourseSpec {
++	readonly name: string;
++	readonly imagePath: string;
++	readonly annotationPath: string;
++}
++
++function discoverCourses(corpusDir: string): readonly CourseSpec[] {
++	const root = resolve(corpusDir);
++	const specs: CourseSpec[] = [];
++	for (const entry of readdirSync(root, { withFileTypes: true })) {
++		if (!entry.isDirectory()) continue;
++		const dir = join(root, entry.name);
++		const files = readdirSync(dir);
++		const annotation = files.find((file: string) => file.endsWith('.annotation.json'));
++		const image = files.find((file: string) => /\.(png|jpe?g)$/i.test(file) && !file.endsWith('.annotation.json'));
++		if (annotation && image) {
++			specs.push({ name: entry.name, imagePath: join(dir, image), annotationPath: join(dir, annotation) });
++		}
++	}
++	return specs.sort((left, right) => left.name.localeCompare(right.name));
++}
++
++async function main(): Promise<void> {
++	const argv = process.argv.slice(2);
++	const argValue = (flag: string): string | undefined => {
++		const index = argv.indexOf(flag);
++		return index >= 0 ? argv[index + 1] : undefined;
++	};
++	const corpusDir = argValue('--corpus');
++	if (!corpusDir) throw new Error('Pass --corpus <dir>.');
++	const outputDir = resolve(argValue('--out') ?? '/tmp/clicksnap-profile');
++	const templateDir = argValue('--templates') ?? 'static/resources/chainspot_cv_templates';
++	if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
++
++	const cv = (await loadCv()) as unknown as TeePadCv & BasketCv & HoleNumberCvModule;
++	const manifest = loadValidatedTemplateManifest(templateDir);
++	const numberTemplates = loadNumberTemplates(templateDir, manifest);
++	const basketTemplate = loadBasketTemplate(templateDir, manifest);
++
++	const report: Record<string, unknown> = {};
++	for (const course of discoverCourses(corpusDir)) {
++		const startedAt = performance.now();
++		const decoded = decodeRaster(new Uint8Array(readFileSync(course.imagePath)), course.imagePath);
++		const { raster: image, note: frameNote } = toAnnotationFrame(decoded, course.annotationPath);
++		const truth = loadTruth(course.annotationPath);
++
++		const numberDetection = detectCalibratedHoleNumberBadges(
++			cv,
++			{ format: 'rgba', widthPx: image.widthPx, heightPx: image.heightPx, data: image.rgba },
++			numberTemplates,
++			{ maxCandidates: 24 }
++		);
++		if (!numberDetection.anchor) {
++			report[course.name] = { error: numberDetection.note ?? 'no number-badge anchor; cannot calibrate' };
++			console.log(`${course.name}: SKIPPED (no badge anchor)`);
++			continue;
++		}
++		const calibration = deriveUDiscCalibration(
++			numberDetection.anchor,
++			manifest.calibration.canonicalNumberBadge
++		);
++		const basketTemplateScale = deriveBasketTemplateScale(
++			numberDetection.anchor.scale,
++			manifest.calibration
++		);
++
++		const teeRaster: LocalSnapRaster = {
++			rgba: image.rgba,
++			widthPx: image.widthPx,
++			heightPx: image.heightPx,
++			sourceScale: 1
++		};
++		const gray = toGray(image);
++		const basketRaster: LocalSnapRaster = {
++			gray,
++			widthPx: image.widthPx,
++			heightPx: image.heightPx,
++			sourceScale: 1
++		};
++		const snapCalibration: Record<LocalSnapKind, LocalSnapCalibration> = {
++			tee: { uiScalePx: calibration.uiScalePx },
++			basket: {
++				uiScalePx: calibration.uiScalePx,
++				basket: { template: basketTemplate, templateScale: basketTemplateScale }
++			}
++		};
++
++		const trace = createTrace({
++			pipeline: 'clickSnap-profile',
++			source: { image: basename(course.imagePath), widthPx: image.widthPx, heightPx: image.heightPx }
++		});
++		const results: ClickResult[] = [];
++		const offsets = clickOffsets();
++		for (const object of truth) {
++			for (const { dx, dy } of offsets) {
++				const clickPx = { xPx: object.xPx + dx, yPx: object.yPx + dy };
++				const eventStart = trace.trace.events.length;
++				const snapped = localFeatureSnap(
++					object.kind,
++					cv,
++					object.kind === 'tee' ? teeRaster : basketRaster,
++					clickPx,
++					snapCalibration[object.kind],
++					trace
++				);
++				const stageId = trace.trace.stages[trace.trace.stages.length - 1]!.id;
++				trace.assign(
++					trace.trace.events
++						.slice(eventStart)
++						.filter((event): event is Extract<TophEvent, { t: 'decide' }> => event.t === 'decide')
++						.find((event) => event.outcome === 'kept')?.entity ?? 0,
++					{ kind: object.kind, key: object.holeNumber },
++					snapped ? 'snap' : 'no-snap',
++					{ truthXPx: object.xPx, truthYPx: object.yPx, stage: stageId }
++				);
++
++				const clickEvents = trace.trace.events.slice(eventStart);
++				const rejection = clickEvents.find(
++					(event): event is Extract<TophEvent, { t: 'decide' }> =>
++						event.t === 'decide' && event.outcome === 'rejected'
++				);
++				const scoreCheck = clickEvents.find(
++					(event): event is Extract<TophEvent, { t: 'check' }> =>
++						event.t === 'check' && event.name === 'score'
++				);
++				const candidateCheck = clickEvents.find(
++					(event): event is Extract<TophEvent, { t: 'check' }> =>
++						event.t === 'check' && event.name === 'candidatesFound'
++				);
++				const clickErrorPx = Math.hypot(dx, dy);
++				results.push({
++					holeNumber: object.holeNumber,
++					kind: object.kind,
++					offsetXPx: dx,
++					offsetYPx: dy,
++					clickErrorPx: Number(clickErrorPx.toFixed(2)),
++					snapped: snapped !== null,
++					snapErrorPx: snapped
++						? Number(Math.hypot(snapped.xPx - object.xPx, snapped.yPx - object.yPx).toFixed(2))
++						: null,
++					movedPx: snapped
++						? Number(Math.hypot(snapped.xPx - clickPx.xPx, snapped.yPx - clickPx.yPx).toFixed(2))
++						: null,
++					rejectedAt: snapped ? null : (rejection?.at ?? 'unknown'),
++					bestScore: scoreCheck?.value !== undefined ? Number(scoreCheck.value.toFixed(3)) : null,
++					candidateCount: candidateCheck?.value ?? null
++				});
++			}
++		}
++
++		const teeResults = results.filter((result) => result.kind === 'tee');
++		const basketResults = results.filter((result) => result.kind === 'basket');
++		const perHole: Record<string, unknown> = {};
++		for (const object of truth) {
++			const holeResults = results.filter(
++				(result) => result.holeNumber === object.holeNumber && result.kind === object.kind
++			);
++			perHole[`${object.kind}-${object.holeNumber}`] = summarize(holeResults);
++		}
++		report[course.name] = {
++			frame: frameNote,
++			uiScalePx: Number(calibration.uiScalePx.toFixed(3)),
++			basketTemplateScale: Number(basketTemplateScale.toFixed(3)),
++			truthObjects: truth.length,
++			tee: summarize(teeResults),
++			basket: summarize(basketResults),
++			perHole,
++			elapsedMs: Math.round(performance.now() - startedAt)
++		};
++		writeFileSync(join(outputDir, `${course.name}-trace.json`), JSON.stringify(trace.trace));
++		writeFileSync(join(outputDir, `${course.name}-clicks.json`), JSON.stringify(results, null, 1));
++		console.log(
++			`${course.name}: tee snapRate=${(report[course.name] as { tee: { snapRate: number | null } }).tee.snapRate} ` +
++				`basket snapRate=${(report[course.name] as { basket: { snapRate: number | null } }).basket.snapRate} ` +
++				`(${Math.round(performance.now() - startedAt)}ms)`
++		);
++	}
++
++	writeFileSync(join(outputDir, 'report.json'), JSON.stringify(report, null, 1));
++	console.log(`\nWrote ${join(outputDir, 'report.json')}`);
++}
++
++main().catch((error) => {
++	console.error(error);
++	process.exit(1);
++});
+diff --git a/src/lib/cv/localSnap.ts b/src/lib/cv/localSnap.ts
+index af7e4f4..3bdedbb 100644
+--- a/src/lib/cv/localSnap.ts
++++ b/src/lib/cv/localSnap.ts
+@@ -65,6 +65,8 @@ import type {
+ } from '../autoAnnotation/cvCalibratedDetectors';
+ import type { TeePadCandidate, TeePadCv, TeePadRaster } from '../autoAnnotation/teePadDetection';
+ import type { BasketCv, BasketRaster, BasketTemplateRaster } from '../autoAnnotation/basketTemplateDetection';
++import { NOOP } from '../toph/trace';
++import type { Trace } from '../toph/trace';
+ 
+ export type LocalSnapKind = 'tee' | 'basket';
+ 
+@@ -291,50 +293,90 @@ function basketCropCandidates(
+  * `LOCAL_SNAP_MAX_ABSOLUTE_RADIUS_PX` of `clickPx` -- a real nearby feature
+  * close enough to be an obvious correction of the user's own click, not just
+  * the least-bad thing the detector could find inside an arbitrary window.
++ *
++ * Ranking happens *within* that radius: candidates outside it are excluded
++ * before choosing the best score, not after. The crop is deliberately wider
++ * than the accept radius (so nearby features are visible and can be
++ * *rejected*), which means a neighboring hole's feature can outscore the one
++ * actually under the click; ranking the whole crop first and radius-testing
++ * the winner made those clicks fail even though an in-radius candidate
++ * existed. Corpus profiling (docs/analysis/clicksnap-toph-profile.md)
++ * measured that in every such case the in-radius runner-up was the real
++ * feature (within 6px of ground truth), so preferring it is strictly better.
+  */
+ export function localFeatureSnap(
+ 	kind: LocalSnapKind,
+ 	cv: LocalSnapCv,
+ 	raster: LocalSnapRaster,
+ 	clickPx: LocalSnapPoint,
+-	calibration: LocalSnapCalibration
++	calibration: LocalSnapCalibration,
++	trace?: Trace
+ ): LocalSnapPoint | null {
+-	if (!Number.isFinite(clickPx.xPx) || !Number.isFinite(clickPx.yPx)) return null;
+-	if (!(calibration.uiScalePx > 0)) return null;
++	const t = trace ?? NOOP;
++	t.stage(`clickSnap.${kind}`);
++	const click = t.spawn('click', clickPx, { geom: { x: clickPx.xPx, y: clickPx.yPx } });
++
++	if (
++		!t.check(click, 'finiteClick', Number.isFinite(clickPx.xPx) && Number.isFinite(clickPx.yPx))
++	) {
++		return null;
++	}
++	if (!t.check(click, 'uiScalePositive', calibration.uiScalePx > 0, calibration.uiScalePx)) {
++		return null;
++	}
+ 
+ 	const footprintPx = featureFootprintSourcePx(kind, calibration);
+-	if (footprintPx === null || !(footprintPx > 0)) return null;
++	if (!t.check(click, 'footprintDerived', footprintPx !== null && footprintPx > 0, footprintPx ?? undefined)) {
++		return null;
++	}
++	t.measure(click, 'footprintPx', footprintPx!);
+ 
+-	const cropSideSourcePx = footprintPx * LOCAL_SNAP_CROP_FEATURE_MULTIPLE;
++	const cropSideSourcePx = footprintPx! * LOCAL_SNAP_CROP_FEATURE_MULTIPLE;
+ 	const snapRadiusPx = Math.min(
+-		footprintPx * LOCAL_SNAP_RADIUS_FEATURE_MULTIPLE,
++		footprintPx! * LOCAL_SNAP_RADIUS_FEATURE_MULTIPLE,
+ 		LOCAL_SNAP_MAX_ABSOLUTE_RADIUS_PX
+ 	);
++	t.measure(click, 'snapRadiusPx', snapRadiusPx);
+ 	const bounds = computeCropBounds(raster, clickPx, cropSideSourcePx);
+-	if (!bounds) return null;
++	if (!t.check(click, 'cropUsable', bounds !== null)) return null;
+ 
+-	const originXPx = bounds.x0 * raster.sourceScale;
+-	const originYPx = bounds.y0 * raster.sourceScale;
++	const originXPx = bounds!.x0 * raster.sourceScale;
++	const originYPx = bounds!.y0 * raster.sourceScale;
+ 
+ 	const candidates =
+ 		kind === 'tee'
+-			? teeCropCandidates(cv, raster, bounds, calibration.uiScalePx)
+-			: basketCropCandidates(cv, raster, bounds, calibration);
+-	if (!candidates || candidates.length === 0) return null;
++			? teeCropCandidates(cv, raster, bounds!, calibration.uiScalePx)
++			: basketCropCandidates(cv, raster, bounds!, calibration);
++	if (!t.check(click, 'candidatesFound', candidates !== null && candidates.length > 0, candidates?.length ?? 0)) {
++		return null;
++	}
+ 
+-	let best: { xPx: number; yPx: number; score: number } | null = null;
+-	for (const candidate of candidates) {
++	let best: { xPx: number; yPx: number; score: number; entity: number } | null = null;
++	const losers: number[] = [];
++	for (const candidate of candidates!) {
+ 		const score = candidate.score ?? -Infinity;
++		const xPx = originXPx + candidate.xPx;
++		const yPx = originYPx + candidate.yPx;
++		const distancePx = Math.hypot(xPx - clickPx.xPx, yPx - clickPx.yPx);
++		const entity = t.spawn('candidate', candidate, {
++			geom: { x: xPx, y: yPx },
++			attrs: { score, distanceToClickPx: distancePx }
++		});
++		if (!t.lte(entity, 'snapDistancePx', distancePx, snapRadiusPx)) continue;
+ 		if (!best || score > best.score) {
+-			best = { xPx: originXPx + candidate.xPx, yPx: originYPx + candidate.yPx, score };
++			if (best) losers.push(best.entity);
++			best = { xPx, yPx, score, entity };
++		} else {
++			losers.push(entity);
+ 		}
+ 	}
+-	if (!best || best.score < LOCAL_SNAP_MIN_SCORE) return null;
++	if (!t.check(click, 'inRadiusCandidate', best !== null)) return null;
++	for (const loser of losers) t.decide(loser, 'ranked-out', { by: best!.entity });
+ 
+-	const distancePx = Math.hypot(best.xPx - clickPx.xPx, best.yPx - clickPx.yPx);
+-	if (distancePx > snapRadiusPx) return null;
++	if (!t.gte(best!.entity, 'score', best!.score, LOCAL_SNAP_MIN_SCORE)) return null;
+ 
+-	return { xPx: best.xPx, yPx: best.yPx };
++	t.keep(best!.entity);
++	return { xPx: best!.xPx, yPx: best!.yPx };
+ }
+ 
+ // Re-exported so callers deriving a `LocalSnapCalibration` from a number-badge
+diff --git a/src/lib/toph/record.ts b/src/lib/toph/record.ts
+new file mode 100644
+index 0000000..05f9f48
+--- /dev/null
++++ b/src/lib/toph/record.ts
+@@ -0,0 +1,138 @@
++/**
++ * Toph recorder — the in-memory recording implementation of `Trace`.
++ * Builds a `TophTrace` object; serialization (JSON to disk, etc.) is the
++ * harness's job, keeping this module environment-agnostic like the core.
++ */
++
++import type { TophAttrValue, TophEntity, TophEvent, TophGeom, TophTrace, Trace } from './trace';
++
++export interface RecordingTrace extends Trace {
++	/** The trace built so far. Safe to read at any point; owned by this recorder. */
++	readonly trace: TophTrace;
++}
++
++export function createTrace(opts: {
++	pipeline: string;
++	source?: { image: string; widthPx: number; heightPx: number };
++	/** Injected clock so traces stay reproducible in tests. Defaults to `new Date()`. */
++	now?: () => Date;
++}): RecordingTrace {
++	const trace: TophTrace = {
++		version: 1,
++		meta: {
++			pipeline: opts.pipeline,
++			startedAt: (opts.now?.() ?? new Date()).toISOString(),
++			...(opts.source ? { source: opts.source } : {})
++		},
++		stages: [],
++		entities: [],
++		events: []
++	};
++
++	const ids = new WeakMap<object, number>();
++	let nextEntityId = 1;
++	let currentStage = 0;
++	const entityById = new Map<number, TophEntity>();
++
++	function pushCheck(
++		e: number,
++		name: string,
++		op: 'gte' | 'lte' | 'range' | 'eq' | 'custom',
++		pass: boolean,
++		value?: number,
++		min?: number,
++		max?: number
++	): boolean {
++		trace.events.push({
++			t: 'check',
++			stage: currentStage,
++			entity: e,
++			name,
++			op,
++			...(value !== undefined ? { value } : {}),
++			...(min !== undefined ? { min } : {}),
++			...(max !== undefined ? { max } : {}),
++			pass
++		} as TophEvent);
++		if (!pass) {
++			trace.events.push({ t: 'decide', stage: currentStage, entity: e, outcome: 'rejected', at: name });
++		}
++		return pass;
++	}
++
++	return {
++		enabled: true,
++		trace,
++		stage(name: string): number {
++			const id = trace.stages.length + 1;
++			trace.stages.push({ id, name, seq: id });
++			currentStage = id;
++			return id;
++		},
++		spawn(kind, obj, opts2): number {
++			const id = nextEntityId;
++			nextEntityId += 1;
++			const entity: TophEntity = {
++				id,
++				kind,
++				stage: currentStage,
++				space: opts2?.space ?? 'source',
++				...(opts2?.geom ? { geom: opts2.geom } : {}),
++				...(opts2?.attrs ? { attrs: { ...opts2.attrs } } : {})
++			};
++			trace.entities.push(entity);
++			entityById.set(id, entity);
++			if (obj) ids.set(obj, id);
++			return id;
++		},
++		idOf(obj: object): number {
++			return ids.get(obj) ?? 0;
++		},
++		attrs(e: number, attrs: Record<string, TophAttrValue>): void {
++			const entity = entityById.get(e);
++			if (!entity) return;
++			entity.attrs = { ...entity.attrs, ...attrs };
++		},
++		gte: (e, name, value, min) => pushCheck(e, name, 'gte', value >= min, value, min),
++		lte: (e, name, value, max) => pushCheck(e, name, 'lte', value <= max, value, undefined, max),
++		range: (e, name, value, min, max) =>
++			pushCheck(e, name, 'range', value >= min && value <= max, value, min, max),
++		check: (e, name, pass, value) => pushCheck(e, name, 'custom', pass, value),
++		measure(e, name, value): void {
++			trace.events.push({ t: 'measure', stage: currentStage, entity: e, name, value });
++		},
++		keep(e, obj): void {
++			trace.events.push({ t: 'decide', stage: currentStage, entity: e, outcome: 'kept' });
++			if (obj) ids.set(obj, e);
++		},
++		reject(e, at): void {
++			trace.events.push({ t: 'decide', stage: currentStage, entity: e, outcome: 'rejected', at });
++		},
++		decide(e, outcome, info): void {
++			const { by, rank, ...rest } = info ?? {};
++			const cleaned: Record<string, TophAttrValue> = {};
++			for (const [key, value] of Object.entries(rest)) {
++				if (value !== undefined) cleaned[key] = value;
++			}
++			trace.events.push({
++				t: 'decide',
++				stage: currentStage,
++				entity: e,
++				outcome,
++				...(by !== undefined ? { by } : {}),
++				...(rank !== undefined ? { rank } : {}),
++				...(Object.keys(cleaned).length > 0 ? { info: cleaned } : {})
++			} as TophEvent);
++		},
++		assign(e, target, outcome, evidence): void {
++			trace.events.push({
++				t: 'assign',
++				stage: currentStage,
++				entity: e,
++				target,
++				outcome,
++				...(evidence ? { evidence } : {})
++			});
++		}
++	};
++}
+diff --git a/src/lib/toph/trace.ts b/src/lib/toph/trace.ts
+new file mode 100644
+index 0000000..b01c4d4
+--- /dev/null
++++ b/src/lib/toph/trace.ts
+@@ -0,0 +1,139 @@
++/**
++ * Toph core — the vertical-slice `Trace` interface from
++ * `samuelpmahan/toph` DESIGN.md, hosted in-repo as its first consumer
++ * (clickSnap profiling). Environment-agnostic: no fs, no DOM, no OpenCV.
++ *
++ * Contract highlights (see DESIGN.md Part 3):
++ *  - Entities are Toph-assigned integer IDs; events reference them.
++ *  - Gate helpers (`gte`/`lte`/`range`/`check`) return the boolean so
++ *    production control flow is unchanged; a failed gate auto-records
++ *    `decide { outcome: 'rejected', at: <gate name> }`.
++ *  - Short-circuited gates simply have no events — the honest
++ *    "NOT EVALUATED" representation.
++ *  - `NOOP` is a frozen singleton whose gates are bare comparisons, so an
++ *    uninstrumented caller pays a monomorphic call and nothing else.
++ */
++
++export interface TophGeom {
++	readonly x: number;
++	readonly y: number;
++	readonly w?: number;
++	readonly h?: number;
++	readonly angleDeg?: number;
++}
++
++export type TophAttrValue = number | string | boolean;
++
++export interface TophStageInvocation {
++	readonly id: number;
++	readonly name: string;
++	readonly seq: number;
++}
++
++export interface TophEntity {
++	readonly id: number;
++	readonly kind: string;
++	readonly stage: number;
++	readonly space: string;
++	geom?: TophGeom;
++	attrs?: Record<string, TophAttrValue>;
++}
++
++export type TophEvent =
++	| {
++			readonly t: 'check';
++			readonly stage: number;
++			readonly entity: number;
++			readonly name: string;
++			readonly op: 'gte' | 'lte' | 'range' | 'eq' | 'custom';
++			readonly value?: number;
++			readonly min?: number;
++			readonly max?: number;
++			readonly pass: boolean;
++	  }
++	| {
++			readonly t: 'decide';
++			readonly stage: number;
++			readonly entity: number;
++			readonly outcome: 'kept' | 'rejected' | 'suppressed' | 'ranked-out' | 'lost-contention' | 'selected';
++			readonly at?: string;
++			readonly by?: number;
++			readonly rank?: number;
++			readonly info?: Record<string, TophAttrValue>;
++	  }
++	| {
++			readonly t: 'measure';
++			readonly stage: number;
++			readonly entity: number;
++			readonly name: string;
++			readonly value: number;
++	  }
++	| {
++			readonly t: 'assign';
++			readonly stage: number;
++			readonly entity: number;
++			readonly target: { readonly kind: string; readonly key: string | number };
++			readonly outcome: string;
++			readonly evidence?: Record<string, number>;
++	  };
++
++export interface TophTrace {
++	readonly version: 1;
++	readonly meta: {
++		readonly pipeline: string;
++		readonly startedAt: string;
++		readonly source?: { readonly image: string; readonly widthPx: number; readonly heightPx: number };
++	};
++	readonly stages: TophStageInvocation[];
++	readonly entities: TophEntity[];
++	readonly events: TophEvent[];
++}
++
++export interface Trace {
++	readonly enabled: boolean;
++	/** Opens a new stage invocation; returns its id. Repeated names are distinct invocations. */
++	stage(name: string): number;
++	spawn(
++		kind: string,
++		obj?: object,
++		opts?: { space?: string; geom?: TophGeom; attrs?: Record<string, TophAttrValue> }
++	): number;
++	idOf(obj: object): number;
++	attrs(e: number, attrs: Record<string, TophAttrValue>): void;
++	gte(e: number, name: string, value: number, min: number): boolean;
++	lte(e: number, name: string, value: number, max: number): boolean;
++	range(e: number, name: string, value: number, min: number, max: number): boolean;
++	check(e: number, name: string, pass: boolean, value?: number): boolean;
++	measure(e: number, name: string, value: number): void;
++	keep(e: number, obj?: object): void;
++	reject(e: number, at: string): void;
++	decide(
++		e: number,
++		outcome: 'suppressed' | 'ranked-out' | 'lost-contention' | 'selected',
++		info?: { by?: number; rank?: number } & Record<string, TophAttrValue | undefined>
++	): void;
++	assign(
++		e: number,
++		target: { kind: string; key: string | number },
++		outcome: string,
++		evidence?: Record<string, number>
++	): void;
++}
++
++/** Zero-cost disabled trace: gates are bare comparisons, everything else is a no-op. */
++export const NOOP: Trace = Object.freeze<Trace>({
++	enabled: false,
++	stage: () => 0,
++	spawn: () => 0,
++	idOf: () => 0,
++	attrs: () => undefined,
++	gte: (_e, _n, value, min) => value >= min,
++	lte: (_e, _n, value, max) => value <= max,
++	range: (_e, _n, value, min, max) => value >= min && value <= max,
++	check: (_e, _n, pass) => pass,
++	measure: () => undefined,
++	keep: () => undefined,
++	reject: () => undefined,
++	decide: () => undefined,
++	assign: () => undefined
++});
+diff --git a/tests/unit/localSnap.test.ts b/tests/unit/localSnap.test.ts
+index 397555b..5668ca6 100644
+--- a/tests/unit/localSnap.test.ts
++++ b/tests/unit/localSnap.test.ts
+@@ -371,6 +371,33 @@ describe('localFeatureSnap — basket', () => {
+ 		expect(result).toBeNull();
+ 	});
+ 
++	it('prefers an in-radius candidate over a higher-scoring one outside the radius', () => {
++		const raster = basketRaster();
++		const clickPx = { xPx: 200, yPx: 200 };
++		// Same near-click peak geometry as the accept test above (lands ~on the
++		// click)…
++		const nearX = 82 - LOWEST_SAMPLE_TEMPLATE_WIDTH / 2;
++		const nearY = Math.round(82 - 0.96 * LOWEST_SAMPLE_TEMPLATE_HEIGHT);
++		// …plus the far-corner peak from the radius-reject test, scored higher.
++		// Ranking the whole crop first would pick the far peak and then fail its
++		// radius test; ranking within the radius must still snap to the near one.
++		const cv = fakeBasketCv(
++			[
++				{ x: nearX, y: nearY, score: 0.6 },
++				{ x: 138, y: 114, score: 0.95 }
++			],
++			165,
++			165
++		);
++
++		const result = localFeatureSnap('basket', cv as unknown as LocalSnapCv, raster, clickPx, BASKET_CALIBRATION);
++
++		expect(result).not.toBeNull();
++		expect(Math.hypot(result!.xPx - clickPx.xPx, result!.yPx - clickPx.yPx)).toBeLessThanOrEqual(
++			BASKET_SNAP_RADIUS_PX
++		);
++	});
++
+ 	it('returns null on an empty crop without ever calling the detector', () => {
+ 		const raster = basketRaster(10, 10);
+ 		const clickPx = { xPx: 5000, yPx: 5000 };

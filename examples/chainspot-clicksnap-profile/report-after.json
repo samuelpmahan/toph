@@ -1,0 +1,1578 @@
+{
+ "AlexClark": {
+  "frame": "annotation frame matches shipped image",
+  "uiScalePx": 1.813,
+  "basketTemplateScale": 1.84,
+  "truthObjects": 6,
+  "tee": {
+   "clicks": 123,
+   "snapRate": 0.667,
+   "snapErrorMedianPx": 3.46,
+   "snapErrorP90Px": 3.46,
+   "snapErrorMaxPx": 3.46,
+   "snappedWorseThanRawClick": 2,
+   "rejections": {
+    "snapDistancePx": 41
+   }
+  },
+  "basket": {
+   "clicks": 123,
+   "snapRate": 0.992,
+   "snapErrorMedianPx": 3.5,
+   "snapErrorP90Px": 4,
+   "snapErrorMaxPx": 4,
+   "snappedWorseThanRawClick": 3,
+   "rejections": {
+    "snapDistancePx": 1
+   }
+  },
+  "perHole": {
+   "tee-1": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 1.02,
+    "snapErrorP90Px": 1.02,
+    "snapErrorMaxPx": 1.02,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-1": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 1.59,
+    "snapErrorP90Px": 1.59,
+    "snapErrorMaxPx": 1.59,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-2": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "snapDistancePx": 41
+    }
+   },
+   "basket-2": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.5,
+    "snapErrorP90Px": 3.5,
+    "snapErrorMaxPx": 3.5,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-3": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.46,
+    "snapErrorP90Px": 3.46,
+    "snapErrorMaxPx": 3.46,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-3": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4,
+    "snapErrorP90Px": 4,
+    "snapErrorMaxPx": 4,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   }
+  },
+  "elapsedMs": 8613
+ },
+ "DashsTrack": {
+  "frame": "annotation frame matches shipped image",
+  "uiScalePx": 1.813,
+  "basketTemplateScale": 1.84,
+  "truthObjects": 36,
+  "tee": {
+   "clicks": 738,
+   "snapRate": 0.942,
+   "snapErrorMedianPx": 0.31,
+   "snapErrorP90Px": 0.84,
+   "snapErrorMaxPx": 4.76,
+   "snappedWorseThanRawClick": 12,
+   "rejections": {
+    "candidatesFound": 41,
+    "snapDistancePx": 2
+   }
+  },
+  "basket": {
+   "clicks": 738,
+   "snapRate": 0.985,
+   "snapErrorMedianPx": 4.03,
+   "snapErrorP90Px": 4.03,
+   "snapErrorMaxPx": 4.03,
+   "snappedWorseThanRawClick": 16,
+   "rejections": {
+    "snapDistancePx": 11
+   }
+  },
+  "perHole": {
+   "tee-1": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.17,
+    "snapErrorP90Px": 0.17,
+    "snapErrorMaxPx": 0.17,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-1": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-2": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.53,
+    "snapErrorP90Px": 0.53,
+    "snapErrorMaxPx": 0.53,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-2": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-3": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-3": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-4": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.24,
+    "snapErrorP90Px": 0.24,
+    "snapErrorMaxPx": 0.24,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-4": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.08,
+    "snapErrorP90Px": 3.08,
+    "snapErrorMaxPx": 3.08,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-5": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "candidatesFound": 41
+    }
+   },
+   "basket-5": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-6": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.48,
+    "snapErrorP90Px": 0.48,
+    "snapErrorMaxPx": 0.48,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-6": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.12,
+    "snapErrorP90Px": 3.12,
+    "snapErrorMaxPx": 3.12,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-7": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.84,
+    "snapErrorP90Px": 0.84,
+    "snapErrorMaxPx": 0.84,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-7": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-8": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.18,
+    "snapErrorP90Px": 0.18,
+    "snapErrorMaxPx": 0.18,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-8": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-9": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.41,
+    "snapErrorP90Px": 0.41,
+    "snapErrorMaxPx": 0.41,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-9": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.08,
+    "snapErrorP90Px": 3.08,
+    "snapErrorMaxPx": 3.08,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-10": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.33,
+    "snapErrorP90Px": 0.33,
+    "snapErrorMaxPx": 0.33,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-10": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-11": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.24,
+    "snapErrorP90Px": 0.24,
+    "snapErrorMaxPx": 0.24,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-11": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.08,
+    "snapErrorP90Px": 3.08,
+    "snapErrorMaxPx": 3.08,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-12": {
+    "clicks": 41,
+    "snapRate": 0.951,
+    "snapErrorMedianPx": 4.76,
+    "snapErrorP90Px": 4.76,
+    "snapErrorMaxPx": 4.76,
+    "snappedWorseThanRawClick": 9,
+    "rejections": {
+     "snapDistancePx": 2
+    }
+   },
+   "basket-12": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-13": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.54,
+    "snapErrorP90Px": 0.54,
+    "snapErrorMaxPx": 0.54,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-13": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-14": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.14,
+    "snapErrorP90Px": 0.14,
+    "snapErrorMaxPx": 0.14,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-14": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-15": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.31,
+    "snapErrorP90Px": 0.31,
+    "snapErrorMaxPx": 0.31,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-15": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-16": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.41,
+    "snapErrorP90Px": 0.41,
+    "snapErrorMaxPx": 0.41,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-16": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-17": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.11,
+    "snapErrorP90Px": 0.11,
+    "snapErrorMaxPx": 0.11,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-17": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.08,
+    "snapErrorP90Px": 3.08,
+    "snapErrorMaxPx": 3.08,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-18": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.24,
+    "snapErrorP90Px": 0.24,
+    "snapErrorMaxPx": 0.24,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-18": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   }
+  },
+  "elapsedMs": 48144
+ },
+ "Heritage": {
+  "frame": "autocropped top=429 bottom=252 to match annotation frame",
+  "uiScalePx": 1.813,
+  "basketTemplateScale": 1.84,
+  "truthObjects": 36,
+  "tee": {
+   "clicks": 738,
+   "snapRate": 0.667,
+   "snapErrorMedianPx": 0,
+   "snapErrorP90Px": 0,
+   "snapErrorMaxPx": 1.45,
+   "snappedWorseThanRawClick": 1,
+   "rejections": {
+    "snapDistancePx": 81,
+    "candidatesFound": 165
+   }
+  },
+  "basket": {
+   "clicks": 738,
+   "snapRate": 0.94,
+   "snapErrorMedianPx": 0,
+   "snapErrorP90Px": 4.03,
+   "snapErrorMaxPx": 4.03,
+   "snappedWorseThanRawClick": 6,
+   "rejections": {
+    "snapDistancePx": 43,
+    "candidatesFound": 1
+   }
+  },
+  "perHole": {
+   "tee-1": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-1": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-2": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-2": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-3": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-3": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-4": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0.07,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-4": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-5": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "snapDistancePx": 40,
+     "candidatesFound": 1
+    }
+   },
+   "basket-5": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-6": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "candidatesFound": 41
+    }
+   },
+   "basket-6": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-7": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-7": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-8": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "candidatesFound": 41
+    }
+   },
+   "basket-8": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-9": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-9": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-10": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "candidatesFound": 41
+    }
+   },
+   "basket-10": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.52,
+    "snapErrorP90Px": 3.52,
+    "snapErrorMaxPx": 3.52,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-11": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-11": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-12": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-12": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-13": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-13": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 2.51,
+    "snapErrorP90Px": 2.51,
+    "snapErrorMaxPx": 2.51,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-14": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 1.45,
+    "snapErrorP90Px": 1.45,
+    "snapErrorMaxPx": 1.45,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-14": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-15": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "candidatesFound": 41
+    }
+   },
+   "basket-15": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-16": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-16": {
+    "clicks": 41,
+    "snapRate": 0.976,
+    "snapErrorMedianPx": 4.03,
+    "snapErrorP90Px": 4.03,
+    "snapErrorMaxPx": 4.03,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {
+     "snapDistancePx": 1
+    }
+   },
+   "tee-17": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-17": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "snapDistancePx": 40,
+     "candidatesFound": 1
+    }
+   },
+   "tee-18": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "snapDistancePx": 41
+    }
+   },
+   "basket-18": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 2.07,
+    "snapErrorP90Px": 2.07,
+    "snapErrorMaxPx": 2.07,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   }
+  },
+  "elapsedMs": 50980
+ },
+ "Lenard": {
+  "frame": "autocropped top=429 bottom=278 to match annotation frame",
+  "uiScalePx": 1.813,
+  "basketTemplateScale": 1.84,
+  "truthObjects": 36,
+  "tee": {
+   "clicks": 738,
+   "snapRate": 0.889,
+   "snapErrorMedianPx": 0,
+   "snapErrorP90Px": 1.32,
+   "snapErrorMaxPx": 2.46,
+   "snappedWorseThanRawClick": 2,
+   "rejections": {
+    "candidatesFound": 40,
+    "snapDistancePx": 42
+   }
+  },
+  "basket": {
+   "clicks": 738,
+   "snapRate": 0.944,
+   "snapErrorMedianPx": 0,
+   "snapErrorP90Px": 2.02,
+   "snapErrorMaxPx": 3.19,
+   "snappedWorseThanRawClick": 4,
+   "rejections": {
+    "candidatesFound": 40,
+    "snapDistancePx": 1
+   }
+  },
+  "perHole": {
+   "tee-1": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-1": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-2": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 1.32,
+    "snapErrorP90Px": 1.32,
+    "snapErrorMaxPx": 1.32,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-2": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-3": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "candidatesFound": 40,
+     "snapDistancePx": 1
+    }
+   },
+   "basket-3": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 2.02,
+    "snapErrorP90Px": 2.02,
+    "snapErrorMaxPx": 2.02,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-4": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-4": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-5": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-5": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-6": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0.1,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-6": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-7": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-7": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-8": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-8": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 1.51,
+    "snapErrorP90Px": 1.51,
+    "snapErrorMaxPx": 1.51,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-9": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-9": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "candidatesFound": 40,
+     "snapDistancePx": 1
+    }
+   },
+   "tee-10": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-10": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.19,
+    "snapErrorP90Px": 3.19,
+    "snapErrorMaxPx": 3.19,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-11": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-11": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-12": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "snapDistancePx": 41
+    }
+   },
+   "basket-12": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0.91,
+    "snapErrorP90Px": 0.91,
+    "snapErrorMaxPx": 0.91,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-13": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-13": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-14": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-14": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-15": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 2.46,
+    "snapErrorP90Px": 2.46,
+    "snapErrorMaxPx": 2.46,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-15": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-16": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-16": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-17": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-17": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-18": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-18": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   }
+  },
+  "elapsedMs": 47869
+ },
+ "TowneLake": {
+  "frame": "autocropped top=532 bottom=252 to match annotation frame",
+  "uiScalePx": 1.813,
+  "basketTemplateScale": 1.84,
+  "truthObjects": 36,
+  "tee": {
+   "clicks": 738,
+   "snapRate": 0.883,
+   "snapErrorMedianPx": 0,
+   "snapErrorP90Px": 2.46,
+   "snapErrorMaxPx": 8.99,
+   "snappedWorseThanRawClick": 19,
+   "rejections": {
+    "snapDistancePx": 20,
+    "candidatesFound": 66
+   }
+  },
+  "basket": {
+   "clicks": 738,
+   "snapRate": 1,
+   "snapErrorMedianPx": 0,
+   "snapErrorP90Px": 2.97,
+   "snapErrorMaxPx": 3.1,
+   "snappedWorseThanRawClick": 5,
+   "rejections": {}
+  },
+  "perHole": {
+   "tee-1": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-1": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 2.97,
+    "snapErrorP90Px": 2.97,
+    "snapErrorMaxPx": 2.97,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-2": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-2": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-3": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-3": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 2.66,
+    "snapErrorP90Px": 2.66,
+    "snapErrorMaxPx": 2.66,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-4": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-4": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 3.1,
+    "snapErrorP90Px": 3.1,
+    "snapErrorMaxPx": 3.1,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-5": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-5": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-6": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-6": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-7": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-7": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-8": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "snapDistancePx": 16,
+     "candidatesFound": 25
+    }
+   },
+   "basket-8": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-9": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-9": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-10": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-10": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-11": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 2.46,
+    "snapErrorP90Px": 2.46,
+    "snapErrorMaxPx": 2.46,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-11": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-12": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-12": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-13": {
+    "clicks": 41,
+    "snapRate": 0.902,
+    "snapErrorMedianPx": 8.99,
+    "snapErrorP90Px": 8.99,
+    "snapErrorMaxPx": 8.99,
+    "snappedWorseThanRawClick": 17,
+    "rejections": {
+     "snapDistancePx": 4
+    }
+   },
+   "basket-13": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 1.55,
+    "snapErrorP90Px": 1.55,
+    "snapErrorMaxPx": 1.55,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-14": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 1.8,
+    "snapErrorP90Px": 1.8,
+    "snapErrorMaxPx": 1.8,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "basket-14": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 1.15,
+    "snapErrorP90Px": 1.15,
+    "snapErrorMaxPx": 1.15,
+    "snappedWorseThanRawClick": 1,
+    "rejections": {}
+   },
+   "tee-15": {
+    "clicks": 41,
+    "snapRate": 0,
+    "snapErrorMedianPx": null,
+    "snapErrorP90Px": null,
+    "snapErrorMaxPx": null,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {
+     "candidatesFound": 41
+    }
+   },
+   "basket-15": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-16": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-16": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-17": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-17": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "tee-18": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   },
+   "basket-18": {
+    "clicks": 41,
+    "snapRate": 1,
+    "snapErrorMedianPx": 0,
+    "snapErrorP90Px": 0,
+    "snapErrorMaxPx": 0,
+    "snappedWorseThanRawClick": 0,
+    "rejections": {}
+   }
+  },
+  "elapsedMs": 50013
+ }
+}
