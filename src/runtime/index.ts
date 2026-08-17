@@ -583,13 +583,13 @@ export function idOf(ref: object): number {
 
 function requireDataflowEntity(session: Session, id: number): void {
 	if (!Number.isInteger(id) || id <= 0 || !session.entities.some((entity) => entity.id === id)) {
-throw new Error('toph: recordDataflow() referenced unknown entity id ' + String(id) + '.');
+		throw new Error('toph: recordDataflow() referenced unknown entity id ' + String(id) + '.');
 	}
 }
 
 function requireDataflowStage(session: Session, stage: number): void {
 	if (!Number.isInteger(stage) || !session.stages.some((invocation) => invocation.invocationId === stage)) {
-throw new Error('toph: recordDataflow() referenced unknown stage invocation id ' + String(stage) + '.');
+		throw new Error('toph: recordDataflow() referenced unknown stage invocation id ' + String(stage) + '.');
 	}
 }
 

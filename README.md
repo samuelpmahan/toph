@@ -44,7 +44,9 @@ dependency:
 /** @toph filter p1.tee.geometry */
 const survivors = candidates.filter((candidate) => {
   /** @toph check area.min */
-  if (candidate.area < minimumArea) return false;
+  const areaOk = candidate.area >= minimumArea;
+  if (!areaOk) return false;
+
   return true;
 });
 ```
