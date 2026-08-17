@@ -132,6 +132,7 @@ export interface TraceRun {
 	checks: CheckRecord[];
 	assets?: AssetRecord[];
 	entities?: EntityRecord[];
+	dataflow?: DataflowEvent[];
 }
 
 export interface StartTraceOptions {
@@ -164,6 +165,7 @@ interface Session {
 	assets: AssetRecord[];
 	/** Public records for every entity `@toph entities` has spawned this session. */
 	entities: EntityRecord[];
+	dataflow: DataflowEvent[];
 	/** assetId -> a private COPY of the bytes passed to snapshotRaster (never the
 	 * caller's original array reference) -- retrievable via getRasterBytes() only while
 	 * this session is active; never serialized into TraceRun (see getRasterBytes). */
@@ -219,6 +221,7 @@ export function startTrace(opts: StartTraceOptions = {}): void {
 		elementsById: new Map(),
 		assets: [],
 		entities: [],
+		dataflow: [],
 		rasterBytesById: new Map(),
 		nextEntityId: 1,
 		entityIdByRef: new WeakMap(),
@@ -242,6 +245,7 @@ export function finishTrace(): TraceRun {
 	if (session.pipeline !== undefined) run.pipeline = session.pipeline;
 	if (session.assets.length > 0) run.assets = session.assets;
 	if (session.entities.length > 0) run.entities = session.entities;
+	if (session.dataflow.length > 0) run.dataflow = session.dataflow;
 	active = null;
 	return run;
 }
@@ -570,4 +574,122 @@ export async function withTophRun<T>(
 
   if (didFail) throw failure;
   return { value, result: value, dir: options.dir, trace: finished.trace, tracePath, manifestPath, assetFiles };
+}
+/** Entity ids are the spine of dataflow evidence; object refs are resolved through the
+ * session WeakMap. Collections remain ordinary JavaScript arrays. */
+export type EntityRef = number | object;
+
+export interface DataflowMapEvent {
+	t: 'map';
+	stage: number;
+	parents: number[];
+	children: number[];
+}
+export interface DataflowSplitEvent {
+	t: 'split';
+	stage: number;
+	parent: number;
+	children: number[];
+}
+export interface DataflowMergeEvent {
+	t: 'merge';
+	stage: number;
+	parents: number[];
+	child: number;
+	rep?: number;
+}
+export interface DataflowReduceEvent {
+	t: 'reduce';
+	stage: number;
+	inputs: number[];
+	output: number;
+}
+export interface DataflowRankEvent {
+	t: 'rank';
+	stage: number;
+	entity: number;
+	rank: number;
+	cutoff?: number;
+}
+export interface DataflowSelectEvent {
+	t: 'select';
+	stage: number;
+	kept: number[];
+	rejected: number[];
+	name?: string;
+}
+export interface DataflowSuppressEvent {
+	t: 'suppress';
+	stage: number;
+	entity: number;
+	by?: number;
+}
+export interface DataflowRelateEvent {
+	t: 'relate';
+	stage: number;
+	left: number;
+	right: number;
+	join?: number;
+	relation?: string;
+}
+export type DataflowEvent =
+	| DataflowMapEvent
+	| DataflowSplitEvent
+	| DataflowMergeEvent
+	| DataflowReduceEvent
+	| DataflowRankEvent
+	| DataflowSelectEvent
+	| DataflowSuppressEvent
+	| DataflowRelateEvent;
+
+/**
+ * Returns the stable id bound to an object in this session, or 0 when it is unknown.
+ * The zero sentinel mirrors the original Trace API design; recordDataflow rejects it
+ * so an incomplete lineage can never be serialized as if it were real evidence.
+ */
+export function idOf(ref: object): number {
+	const session = requireSession('idOf');
+	return session.entityIdByRef.get(ref) ?? 0;
+}
+
+function requireDataflowEntity(session: Session, id: number): void {
+	if (!Number.isInteger(id) || id <= 0 || !session.entities.some((entity) => entity.id === id)) {
+throw new Error('toph: recordDataflow() referenced unknown entity id ' + String(id) + '.');
+	}
+}
+
+function requireDataflowStage(session: Session, stage: number): void {
+	if (!Number.isInteger(stage) || !session.stages.some((invocation) => invocation.invocationId === stage)) {
+throw new Error('toph: recordDataflow() referenced unknown stage invocation id ' + String(stage) + '.');
+	}
+}
+
+function copyDataflowEvent(event: DataflowEvent): DataflowEvent {
+	switch (event.t) {
+		case 'map': return { ...event, parents: [...event.parents], children: [...event.children] };
+		case 'split': return { ...event, children: [...event.children] };
+		case 'merge': return { ...event, parents: [...event.parents] };
+		case 'reduce': return { ...event, inputs: [...event.inputs] };
+		case 'select': return { ...event, kept: [...event.kept], rejected: [...event.rejected] };
+		default: return { ...event };
+	}
+}
+
+/** Records one validated, append-only dataflow fact without wrapping a JS collection. */
+export function recordDataflow(event: DataflowEvent): void {
+	const session = requireSession('recordDataflow');
+	requireDataflowStage(session, event.stage);
+	const ids: number[] = [];
+	switch (event.t) {
+		case 'map': ids.push(...event.parents, ...event.children); break;
+		case 'split': ids.push(event.parent, ...event.children); break;
+		case 'merge': ids.push(...event.parents, event.child); if (event.rep !== undefined) ids.push(event.rep); break;
+		case 'reduce': ids.push(...event.inputs, event.output); break;
+		case 'rank': ids.push(event.entity); break;
+		case 'select': ids.push(...event.kept, ...event.rejected); break;
+		case 'suppress': ids.push(event.entity); if (event.by !== undefined) ids.push(event.by); break;
+		case 'relate': ids.push(event.left, event.right); if (event.join !== undefined) ids.push(event.join); break;
+	}
+	for (const id of ids) requireDataflowEntity(session, id);
+	session.dataflow.push(copyDataflowEvent(event));
 }
