@@ -94,7 +94,7 @@ function makeTrace(): TraceRun {
 
 function makeManifest(): Pick<ManifestFragment, 'stages' | 'checks' | 'entityKinds'> {
 	return {
-		stages: [{ id: 10, name: 'p1.tee.geometry', kind: 'filter', source: { file: 'rawObjectMask.ts', line: 337 } }],
+		stages: [{ id: 10, name: 'p1.tee.geometry', kind: 'filter', family: 'tee', source: { file: 'rawObjectMask.ts', line: 337 } }],
 		checks: [
 			{ id: 1, stageId: 10, code: 'area.min', operator: '>=', unit: 'px2', source: { file: 'rawObjectMask.ts', line: 339 } },
 			{ id: 2, stageId: 10, code: 'fill.max', operator: '<=', source: { file: 'rawObjectMask.ts', line: 360 } },
@@ -333,7 +333,7 @@ describe('inspectTruth (end to end)', () => {
 		expect(report.stages).toHaveLength(1);
 		expect(report.stages[0].firstFailingCheck?.code).toBe('area.min');
 		expect(report.stages[0].checksNotEvaluated).toEqual(['fill.max']);
-		expect(report.downstreamNote).toContain('rejected at "area.min"');
+		expect(report.downstreamNote).toContain('rejection for semantic family "tee" was at "area.min"');
 	});
 
 	it('full report for a kept component', () => {
