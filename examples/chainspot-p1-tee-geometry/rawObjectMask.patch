@@ -1,0 +1,56 @@
+--- a/src/lib/autoAnnotation/rawObjectMask.ts
++++ b/src/lib/autoAnnotation/rawObjectMask.ts
+@@ -321,23 +321,39 @@
+ 		const maxY = Math.min(height - 1, badgeMaxY + verticalMargin);
+ 		const badgeOverlapMargin = Math.max(2, badgeMedianHeight * 0.08);
+ 
+-		teeComponents = brightComponents.filter((component) => {
++		const geometryPool = brightComponents.filter((component) => {
+ 			if (component.centroidY < minY || component.centroidY > maxY) return false;
+ 			if (centerFallsInsideBadge(component, badgeComponents, badgeOverlapMargin)) return false;
++			return true;
++		});
+ 
+-			const minDimension = Math.min(component.widthPx, component.heightPx);
+-			const maxDimension = Math.max(component.widthPx, component.heightPx);
+-			const bboxAspect = maxDimension / Math.max(1, minDimension);
+-
+-			return (
+-				component.areaPx >= basketMedianArea * 0.09 &&
+-				component.areaPx <= basketMedianArea * 0.35 &&
+-				minDimension >= badgeMedianHeight * 0.45 &&
+-				maxDimension <= basketMedianWidth * 2 &&
+-				bboxAspect <= 2.2 &&
+-				component.fill >= 0.12 &&
+-				component.fill <= 0.55
+-			);
++		/** @toph filter p1.tee.geometry */
++		teeComponents = geometryPool.filter((component) => {
++			/** @toph check area.min unit=px2 */
++			const areaMinOk = component.areaPx >= basketMedianArea * 0.09;
++			if (!areaMinOk) return false;
++			/** @toph check area.max unit=px2 */
++			const areaMaxOk = component.areaPx <= basketMedianArea * 0.35;
++			if (!areaMaxOk) return false;
++			/** @toph check min-dimension unit=px */
++			const minDimensionOk = Math.min(component.widthPx, component.heightPx) >= badgeMedianHeight * 0.45;
++			if (!minDimensionOk) return false;
++			/** @toph check max-dimension unit=px */
++			const maxDimensionOk = Math.max(component.widthPx, component.heightPx) <= basketMedianWidth * 2;
++			if (!maxDimensionOk) return false;
++			/** @toph check bbox-aspect.max */
++			const bboxAspectOk =
++				Math.max(component.widthPx, component.heightPx) /
++					Math.max(1, Math.min(component.widthPx, component.heightPx)) <=
++				2.2;
++			if (!bboxAspectOk) return false;
++			/** @toph check fill.min */
++			const fillMinOk = component.fill >= 0.12;
++			if (!fillMinOk) return false;
++			/** @toph check fill.max */
++			const fillMaxOk = component.fill <= 0.55;
++			if (!fillMaxOk) return false;
++			return true;
+ 		});
+ 
+ 		teeComponents = teeComponents.filter((component) =>

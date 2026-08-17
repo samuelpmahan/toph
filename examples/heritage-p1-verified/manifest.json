@@ -1,0 +1,178 @@
+{
+  "stages": [
+    {
+      "id": 1,
+      "name": "p1.tee.prefilter",
+      "kind": "filter",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 331
+      }
+    },
+    {
+      "id": 2,
+      "name": "p1.tee.geometry",
+      "kind": "filter",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 345
+      }
+    },
+    {
+      "id": 3,
+      "name": "p1.tee.appearance",
+      "kind": "filter",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 374
+      }
+    }
+  ],
+  "checks": [
+    {
+      "id": 1,
+      "stageId": 1,
+      "code": "centroid-y.min",
+      "operator": ">=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 333
+      },
+      "unit": "px"
+    },
+    {
+      "id": 2,
+      "stageId": 1,
+      "code": "centroid-y.max",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 336
+      },
+      "unit": "px"
+    },
+    {
+      "id": 3,
+      "stageId": 1,
+      "code": "badge-overlap",
+      "operator": "===",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 339
+      }
+    },
+    {
+      "id": 4,
+      "stageId": 2,
+      "code": "area.min",
+      "operator": ">=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 347
+      },
+      "unit": "px2"
+    },
+    {
+      "id": 5,
+      "stageId": 2,
+      "code": "area.max",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 350
+      },
+      "unit": "px2"
+    },
+    {
+      "id": 6,
+      "stageId": 2,
+      "code": "min-dimension",
+      "operator": ">=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 353
+      },
+      "unit": "px"
+    },
+    {
+      "id": 7,
+      "stageId": 2,
+      "code": "max-dimension",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 356
+      },
+      "unit": "px"
+    },
+    {
+      "id": 8,
+      "stageId": 2,
+      "code": "bbox-aspect.max",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 359
+      }
+    },
+    {
+      "id": 9,
+      "stageId": 2,
+      "code": "fill.min",
+      "operator": ">=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 365
+      }
+    },
+    {
+      "id": 10,
+      "stageId": 2,
+      "code": "fill.max",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 368
+      }
+    },
+    {
+      "id": 11,
+      "stageId": 3,
+      "code": "appearance.ncc",
+      "operator": ">=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 376
+      }
+    }
+  ],
+  "assets": [
+    {
+      "id": 1,
+      "name": "bright.mask",
+      "kind": "mask",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 292
+      }
+    }
+  ],
+  "entityKinds": [
+    {
+      "id": 1,
+      "name": "component",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 292
+      }
+    },
+    {
+      "id": 2,
+      "name": "tee",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 392
+      }
+    }
+  ]
+}

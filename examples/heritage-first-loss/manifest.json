@@ -1,0 +1,110 @@
+{
+  "stages": [
+    {
+      "id": 1,
+      "name": "p1.tee.geometry",
+      "kind": "filter",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 337
+      }
+    }
+  ],
+  "checks": [
+    {
+      "id": 1,
+      "stageId": 1,
+      "code": "area.min",
+      "operator": ">=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 339
+      },
+      "unit": "px2"
+    },
+    {
+      "id": 2,
+      "stageId": 1,
+      "code": "area.max",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 342
+      },
+      "unit": "px2"
+    },
+    {
+      "id": 3,
+      "stageId": 1,
+      "code": "min-dimension",
+      "operator": ">=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 345
+      },
+      "unit": "px"
+    },
+    {
+      "id": 4,
+      "stageId": 1,
+      "code": "max-dimension",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 348
+      },
+      "unit": "px"
+    },
+    {
+      "id": 5,
+      "stageId": 1,
+      "code": "bbox-aspect.max",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 351
+      }
+    },
+    {
+      "id": 6,
+      "stageId": 1,
+      "code": "fill.min",
+      "operator": ">=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 357
+      }
+    },
+    {
+      "id": 7,
+      "stageId": 1,
+      "code": "fill.max",
+      "operator": "<=",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 360
+      }
+    }
+  ],
+  "assets": [
+    {
+      "id": 1,
+      "name": "bright.mask",
+      "kind": "mask",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 292
+      }
+    }
+  ],
+  "entityKinds": [
+    {
+      "id": 1,
+      "name": "component",
+      "source": {
+        "file": "chainspot/src/lib/autoAnnotation/rawObjectMask.ts",
+        "line": 292
+      }
+    }
+  ]
+}
