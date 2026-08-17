@@ -1,0 +1,388 @@
+{
+  "losses": [
+    {
+      "hole": 1,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "153.00 vs [13.95, 54.25] (component 3.6px from click)"
+    },
+    {
+      "hole": 1,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 2,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "149.00 vs [13.95, 54.25] (component 2.2px from click)"
+    },
+    {
+      "hole": 2,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 3,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "minDim",
+      "detail": "5.00 vs [16.20, inf] (component 2.8px from click)"
+    },
+    {
+      "hole": 3,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 4,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "148.00 vs [13.95, 54.25] (component 3.2px from click)"
+    },
+    {
+      "hole": 4,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 5,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "150.00 vs [13.95, 54.25] (component 3.6px from click)"
+    },
+    {
+      "hole": 5,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 6,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "142.00 vs [13.95, 54.25] (component 3.6px from click)"
+    },
+    {
+      "hole": 6,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 7,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "144.00 vs [13.95, 54.25] (component 3.2px from click)"
+    },
+    {
+      "hole": 7,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 8,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "141.00 vs [13.95, 54.25] (component 3.2px from click)"
+    },
+    {
+      "hole": 8,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 9,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "143.00 vs [13.95, 54.25] (component 3.6px from click)"
+    },
+    {
+      "hole": 9,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "p1.basketShapePool",
+      "lossGate": "aspect",
+      "detail": "1.08 vs [1.25, 2.20] (component 3.0px from click)"
+    },
+    {
+      "hole": 10,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "138.00 vs [13.95, 54.25] (component 2.2px from click)"
+    },
+    {
+      "hole": 10,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 1.0px from click)"
+    },
+    {
+      "hole": 11,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "154.00 vs [13.95, 54.25] (component 3.6px from click)"
+    },
+    {
+      "hole": 11,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 12,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "148.00 vs [13.95, 54.25] (component 2.8px from click)"
+    },
+    {
+      "hole": 12,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "p1.basketShapePool",
+      "lossGate": "fill",
+      "detail": "0.29 vs [0.40, 0.80] (component 4.0px from click)"
+    },
+    {
+      "hole": 13,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "141.00 vs [13.95, 54.25] (component 3.2px from click)"
+    },
+    {
+      "hole": 13,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 4.0px from click)"
+    },
+    {
+      "hole": 14,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "149.00 vs [13.95, 54.25] (component 3.2px from click)"
+    },
+    {
+      "hole": 14,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 15,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "150.00 vs [13.95, 54.25] (component 1.4px from click)"
+    },
+    {
+      "hole": 15,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 4.0px from click)"
+    },
+    {
+      "hole": 16,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "152.00 vs [13.95, 54.25] (component 3.0px from click)"
+    },
+    {
+      "hole": 16,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 17,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "140.00 vs [13.95, 54.25] (component 4.0px from click)"
+    },
+    {
+      "hole": 17,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 3.0px from click)"
+    },
+    {
+      "hole": 18,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "154.00 vs [13.95, 54.25] (component 3.6px from click)"
+    },
+    {
+      "hole": 18,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "basket.sizeConsensus",
+      "lossGate": "sizeConsensus",
+      "detail": " (component 4.0px from click)"
+    }
+  ],
+  "falsePositives": [
+    {
+      "kind": "basket",
+      "xPx": 859,
+      "yPx": 144
+    },
+    {
+      "kind": "basket",
+      "xPx": 917.5,
+      "yPx": 293
+    },
+    {
+      "kind": "basket",
+      "xPx": 687.5,
+      "yPx": 396
+    },
+    {
+      "kind": "basket",
+      "xPx": 794,
+      "yPx": 412
+    },
+    {
+      "kind": "basket",
+      "xPx": 696.5,
+      "yPx": 560
+    },
+    {
+      "kind": "basket",
+      "xPx": 489.5,
+      "yPx": 728
+    },
+    {
+      "kind": "basket",
+      "xPx": 350.5,
+      "yPx": 884
+    },
+    {
+      "kind": "basket",
+      "xPx": 386.5,
+      "yPx": 932
+    },
+    {
+      "kind": "basket",
+      "xPx": 294.5,
+      "yPx": 1134
+    },
+    {
+      "kind": "basket",
+      "xPx": 220.5,
+      "yPx": 1391
+    },
+    {
+      "kind": "basket",
+      "xPx": 262.5,
+      "yPx": 1406
+    },
+    {
+      "kind": "basket",
+      "xPx": 354,
+      "yPx": 1492
+    },
+    {
+      "kind": "basket",
+      "xPx": 231.5,
+      "yPx": 1568
+    },
+    {
+      "kind": "basket",
+      "xPx": 476.5,
+      "yPx": 1577
+    },
+    {
+      "kind": "basket",
+      "xPx": 300,
+      "yPx": 1679
+    },
+    {
+      "kind": "basket",
+      "xPx": 308,
+      "yPx": 1809
+    },
+    {
+      "kind": "basket",
+      "xPx": 213.5,
+      "yPx": 1867
+    }
+  ],
+  "tolerancePx": 26,
+  "counts": {
+    "teeTruths": 18,
+    "teeDetected": 0,
+    "teeFalsePositives": 0,
+    "basketTruths": 18,
+    "basketDetected": 0,
+    "basketFalsePositives": 17
+  }
+}

@@ -1,0 +1,272 @@
+{
+  "losses": [
+    {
+      "hole": 1,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "133.00 vs [157.14, 611.10] (component 3.0px from click)"
+    },
+    {
+      "hole": 1,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 2,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "137.00 vs [157.14, 611.10] (component 2.8px from click)"
+    },
+    {
+      "hole": 2,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 3,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "116.00 vs [157.14, 611.10] (component 3.0px from click)"
+    },
+    {
+      "hole": 3,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 4,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "130.00 vs [157.14, 611.10] (component 3.0px from click)"
+    },
+    {
+      "hole": 4,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 3.0808440401941444
+    },
+    {
+      "hole": 5,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "1746.00 vs [157.14, 611.10]"
+    },
+    {
+      "hole": 5,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 0
+    },
+    {
+      "hole": 6,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "1746.00 vs [157.14, 611.10] (component 2.0px from click)"
+    },
+    {
+      "hole": 6,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 7,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "123.00 vs [157.14, 611.10] (component 2.8px from click)"
+    },
+    {
+      "hole": 7,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 8,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "133.00 vs [157.14, 611.10] (component 1.0px from click)"
+    },
+    {
+      "hole": 8,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 3.0808440401941444
+    },
+    {
+      "hole": 9,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "131.00 vs [157.14, 611.10] (component 2.2px from click)"
+    },
+    {
+      "hole": 9,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 10,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "1746.00 vs [157.14, 611.10]"
+    },
+    {
+      "hole": 10,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 1.9505077802297885
+    },
+    {
+      "hole": 11,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "121.00 vs [157.14, 611.10] (component 2.8px from click)"
+    },
+    {
+      "hole": 11,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 12,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "124.00 vs [157.14, 611.10] (component 3.0px from click)"
+    },
+    {
+      "hole": 12,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "p1.basketShapePool",
+      "lossGate": "fill",
+      "detail": "0.33 vs [0.40, 0.80] (component 4.0px from click)"
+    },
+    {
+      "hole": 13,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "122.00 vs [157.14, 611.10] (component 3.0px from click)"
+    },
+    {
+      "hole": 13,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "p1.basketShapePool",
+      "lossGate": "fill",
+      "detail": "0.31 vs [0.40, 0.80] (component 2.0px from click)"
+    },
+    {
+      "hole": 14,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "119.00 vs [157.14, 611.10] (component 3.0px from click)"
+    },
+    {
+      "hole": 14,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 15,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "outsideBadge",
+      "detail": " (component 2.2px from click)"
+    },
+    {
+      "hole": 15,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 0
+    },
+    {
+      "hole": 16,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "126.00 vs [157.14, 611.10] (component 2.2px from click)"
+    },
+    {
+      "hole": 16,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 0
+    },
+    {
+      "hole": 17,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "130.00 vs [157.14, 611.10] (component 3.0px from click)"
+    },
+    {
+      "hole": 17,
+      "kind": "basket",
+      "outcome": "lost",
+      "lossStage": "p1.basketShapePool",
+      "lossGate": "fill",
+      "detail": "0.32 vs [0.40, 0.80] (component 3.0px from click)"
+    },
+    {
+      "hole": 18,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "areaVsBasket",
+      "detail": "139.00 vs [157.14, 611.10] (component 3.0px from click)"
+    },
+    {
+      "hole": 18,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 3.6932140668642544
+    }
+  ],
+  "falsePositives": [],
+  "tolerancePx": 26,
+  "counts": {
+    "teeTruths": 18,
+    "teeDetected": 0,
+    "teeFalsePositives": 0,
+    "basketTruths": 18,
+    "basketDetected": 15,
+    "basketFalsePositives": 0
+  }
+}

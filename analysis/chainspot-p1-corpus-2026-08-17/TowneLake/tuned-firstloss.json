@@ -1,0 +1,234 @@
+{
+  "losses": [
+    {
+      "hole": 1,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "fill",
+      "detail": "0.60 vs [0.12, 0.55] (component 4.0px from click)"
+    },
+    {
+      "hole": 1,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 5.8692970073784485
+    },
+    {
+      "hole": 2,
+      "kind": "tee",
+      "outcome": "lost",
+      "lossStage": "p1.teeFamily",
+      "lossGate": "fill",
+      "detail": "0.58 vs [0.12, 0.55] (component 3.0px from click)"
+    },
+    {
+      "hole": 2,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 3,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.1194400750177916
+    },
+    {
+      "hole": 3,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 2.022968732815054
+    },
+    {
+      "hole": 4,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.3294621600744009
+    },
+    {
+      "hole": 4,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 3.0378411461809294
+    },
+    {
+      "hole": 5,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.151584765647675
+    },
+    {
+      "hole": 5,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 6,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.24937186216332677
+    },
+    {
+      "hole": 6,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 7,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.23004330007198145
+    },
+    {
+      "hole": 7,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 8,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 1.9160850850257076
+    },
+    {
+      "hole": 8,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 9,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.07142653739380476
+    },
+    {
+      "hole": 9,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 10,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.2811249593337707
+    },
+    {
+      "hole": 10,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 11,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 2.2363677291372266
+    },
+    {
+      "hole": 11,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 12,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.13727824067935496
+    },
+    {
+      "hole": 12,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 13,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 2.040284594537085
+    },
+    {
+      "hole": 13,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 3.1895456909600717
+    },
+    {
+      "hole": 14,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 2.0135703604302093
+    },
+    {
+      "hole": 14,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.085541292931932
+    },
+    {
+      "hole": 15,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 2.053347456894289
+    },
+    {
+      "hole": 15,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 16,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.08664646759709213
+    },
+    {
+      "hole": 16,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 3.0808440401941444
+    },
+    {
+      "hole": 17,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.17993770930779865
+    },
+    {
+      "hole": 17,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    },
+    {
+      "hole": 18,
+      "kind": "tee",
+      "outcome": "detected",
+      "distancePx": 0.2525697599239549
+    },
+    {
+      "hole": 18,
+      "kind": "basket",
+      "outcome": "detected",
+      "distancePx": 4.031128874149275
+    }
+  ],
+  "falsePositives": [],
+  "tolerancePx": 26,
+  "counts": {
+    "teeTruths": 18,
+    "teeDetected": 16,
+    "teeFalsePositives": 0,
+    "basketTruths": 18,
+    "basketDetected": 18,
+    "basketFalsePositives": 0
+  }
+}
