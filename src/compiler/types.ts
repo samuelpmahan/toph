@@ -14,6 +14,10 @@ export interface StageManifestEntry {
 	id: number;
 	name: string;
 	kind: 'filter';
+	/** Optional semantic verdict family declared by `@toph filter <name> family=<family>`.
+	 * Execution stage names answer where code ran; family answers what kind of truth this
+	 * stage is entitled to adjudicate. Queries must never infer family from the name. */
+	family?: string;
 	source: SourceLocation;
 }
 
@@ -78,10 +82,9 @@ export interface IdAllocator {
  * where in the *generated* code string this stage's `enterStage` call landed, so that
  * writeManifest can build the flat sourceMap without re-parsing generated code.
  *
- * This field is NOT part of the public StageManifestEntry contract (the manifest JSON
- * shape must stay exactly {id, name, kind, source}) -- it rides along on the same
- * object at runtime and writeManifest strips it back out when building the public
- * manifest, using it only to populate the separate sourceMap array.
+ * This field is NOT part of the public StageManifestEntry contract; it rides along on
+ * the same object at runtime and writeManifest strips it back out when building the
+ * public manifest, using it only to populate the separate sourceMap array.
  */
 export interface InternalStageManifestEntry extends StageManifestEntry {
 	generatedFile: string;

@@ -1,8 +1,9 @@
 # Toph
 
-Toph records why annotated TypeScript filter stages kept or rejected an object.
-The production compiler leaves annotations unchanged; trace compilation adds the
-runtime calls used by inspection.
+Toph records execution evidence from annotated TypeScript CV pipelines, then answers
+queries over that evidence. The runtime records what happened; the query layer is
+responsible for correspondence and semantic verdicts and is expected to fail closed
+when those cannot be established safely.
 
 ## Quickstart
 
@@ -37,20 +38,64 @@ npx toph funnel --trace trace.json --manifest manifest.json \
   --labelmap labelmap.json --truth truth.json --stages p1.tee.geometry
 ```
 
-The compiler directives are comments, so production output has no Toph runtime
-dependency:
+## Execution stage vs semantic family
+
+A stage name answers **where code ran**. An optional family answers **what kind of
+truth that stage is entitled to adjudicate**:
 
 ```ts
-/** @toph filter p1.tee.geometry */
+/** @toph filter p1.tee.geometry family=tee */
 const survivors = candidates.filter((candidate) => {
   /** @toph check area.min */
   const areaOk = candidate.area >= minimumArea;
   if (!areaOk) return false;
-
   return true;
 });
 ```
 
-`examples/chainspot-validation/workflow.yml` documents the adapter contract without being an active repository workflow. See `examples/heritage-first-loss/` for a complete trace and inspection fixture.
+Ground truth may declare `expect: "tee"`. When it does, `inspect` considers only
+stages whose manifest explicitly declares `family: "tee"` when deriving the verdict.
+A rejection in `family=basket` is still visible execution evidence, but it cannot be
+reported as a tee's loss. Toph never infers family from stage-name spelling.
+
+Repeated executions of one logical stage remain separate stage invocations in the
+trace. Invocation-level inspection preserves all of them. Object-level funnels count
+a corresponding truth/entity at most once per logical stage, and mixed kept/rejected
+invocations are not silently collapsed into a clean survivor count.
+
+## Correspondence invariants
+
+New truth and labelmap artifacts should name their coordinate space. If the names
+differ, a query requires an explicit transform from truth space to labelmap space; if
+none exists, correspondence is refused before any pixel or centroid lookup.
+
+Labelmaps may also carry `entityIds`, the ordered entity set they label. Pixel label
+`N` then means `entityIds[N-1]`. Legacy ordinal lookup remains readable only when that
+ordinal resolves uniquely; if multiple spawn sites make it ambiguous, Toph refuses to
+guess.
+
+Nearest-pixel/nearest-centroid correspondence always reports method and distance.
+Ambiguous truth or unreliable correspondence never forces a semantic verdict.
+
+## Population decisions and measures
+
+Threshold checks are not the only reason an entity can disappear. Population-relative
+operations such as consensus or clustering should record a `select` dataflow event with
+`kept`, `rejected`, and optional primitive `basis` metadata. `selectFateOf(entityId)`
+then exposes the entity's population decision directly.
+
+Runtime-derived context that explains later checks belongs in stage-scoped measures:
+
+```ts
+recordMeasure(stageInvocationId, 'basketMedianArea', basketMedianArea, 'px2');
+```
+
+Measures are evidence, not gates: recording one cannot change control flow or an
+entity's fate.
+
+The compiler directives are comments, so production output has no Toph runtime
+dependency. `examples/chainspot-validation/workflow.yml` documents the adapter contract
+without being an active repository workflow. See `examples/heritage-first-loss/` for a
+complete trace and inspection fixture.
 
 Consumer-side baseline comparison is available from `toph/evaluation`.
