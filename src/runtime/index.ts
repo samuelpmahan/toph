@@ -1,4 +1,7 @@
 // Toph runtime (Phase 2).
+import { mkdir, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
 //
 // This module is what `import * as __toph from "toph"` resolves to (package.json's
 // "." export points here). It implements the exact function names/signatures that
@@ -479,4 +482,92 @@ export function snapshotRaster(
 export function getRasterBytes(assetId: number): Uint8Array | Uint8ClampedArray | undefined {
 	const session = requireSession('getRasterBytes');
 	return session.rasterBytesById.get(assetId);
+}
+
+/** Options for a complete, persisted trace lifecycle. */
+export interface WithTophRunOptions {
+  /** Destination directory. It is created recursively when absent. */
+  dir: string;
+  pipeline?: string;
+  /** Compiler manifest to copy into the run directory. */
+  manifest?: unknown;
+  /** Optional compiler source map to copy alongside the manifest. */
+  sourceMap?: unknown;
+}
+
+export interface TophRunResult<T> {
+  value: T;
+  result: T;
+  dir: string;
+  trace: TraceRun;
+  tracePath: string;
+  manifestPath: string;
+  assetFiles: string[];
+}
+
+interface FinishedRun {
+  trace: TraceRun;
+  assetBytes: Array<{ asset: AssetRecord; bytes: Uint8Array | Uint8ClampedArray }>;
+}
+
+function finishTraceWithAssets(): FinishedRun {
+  const session = requireSession('finishTrace');
+  const assetBytes = session.assets.flatMap((asset) => {
+    const bytes = session.rasterBytesById.get(asset.id);
+    return bytes === undefined ? [] : [{ asset, bytes }];
+  });
+  return { trace: finishTrace(), assetBytes };
+}
+
+function safeAssetName(name: string): string {
+  const safe = name.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
+  return safe || 'asset';
+}
+
+/** Starts a trace, executes callback, and persists a self-contained run directory. */
+export async function withTophRun<T>(
+  options: WithTophRunOptions,
+  callback: () => T | Promise<T>
+): Promise<TophRunResult<T>> {
+  if (!options.dir) throw new Error('toph: withTophRun() requires a non-empty dir');
+  await mkdir(options.dir, { recursive: true });
+  startTrace({ pipeline: options.pipeline });
+
+  let value!: T;
+  let failure: unknown;
+  let didFail = false;
+  try {
+    value = await callback();
+  } catch (error) {
+    didFail = true;
+    failure = error;
+  }
+
+  const finished = finishTraceWithAssets();
+  const tracePath = join(options.dir, 'trace.json');
+  const manifestPath = join(options.dir, 'manifest.json');
+  const manifest = options.manifest ?? { stages: [], checks: [], assets: [], entityKinds: [] };
+  await writeFile(tracePath, JSON.stringify(finished.trace, null, 2) + '\n', 'utf8');
+  await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+  if (options.sourceMap !== undefined) {
+    await writeFile(join(options.dir, 'source-map.json'), JSON.stringify(options.sourceMap, null, 2) + '\n', 'utf8');
+  }
+
+  const assetFiles: string[] = [];
+  if (finished.assetBytes.length > 0) {
+    const assetDir = join(options.dir, 'assets');
+    await mkdir(assetDir, { recursive: true });
+    const assetIndex = finished.assetBytes.map(({ asset }) => {
+      const file = `${String(asset.id).padStart(4, '0')}-${safeAssetName(asset.name)}.bin`;
+      assetFiles.push(join('assets', file));
+      return { ...asset, file };
+    });
+    for (let i = 0; i < finished.assetBytes.length; i += 1) {
+      await writeFile(join(assetDir, assetIndex[i].file), finished.assetBytes[i].bytes);
+    }
+    await writeFile(join(assetDir, 'index.json'), JSON.stringify(assetIndex, null, 2) + '\n', 'utf8');
+  }
+
+  if (didFail) throw failure;
+  return { value, result: value, dir: options.dir, trace: finished.trace, tracePath, manifestPath, assetFiles };
 }
