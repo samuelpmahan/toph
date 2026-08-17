@@ -20,7 +20,7 @@ deterministic within one compile invocation, so compile related files together.
 Wrap a run to persist a self-contained trace directory:
 
 ```ts
-import { withTophRun } from 'toph';
+import { withTophRun } from 'toph/run';
 
 await withTophRun({ dir: '.toph/runs/example', pipeline: 'example', manifest }, async () => {
   await runPipeline();
@@ -44,9 +44,11 @@ dependency:
 /** @toph filter p1.tee.geometry */
 const survivors = candidates.filter((candidate) => {
   /** @toph check area.min */
-  const areaOk = candidate.area >= minimumArea;
-  return areaOk;
+  if (candidate.area < minimumArea) return false;
+  return true;
 });
 ```
 
-See `examples/heritage-first-loss/` for a complete trace and inspection fixture.
+`examples/chainspot-validation/workflow.yml` documents the adapter contract without being an active repository workflow. See `examples/heritage-first-loss/` for a complete trace and inspection fixture.
+
+Consumer-side baseline comparison is available from `toph/evaluation`.

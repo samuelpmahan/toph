@@ -21,6 +21,14 @@
       "types": "./dist/compiler/index.d.ts",
       "import": "./dist/compiler/index.js"
     },
+    "./run": {
+      "types": "./dist/run/index.d.ts",
+      "import": "./dist/run/index.js"
+    },
+    "./evaluation": {
+      "types": "./dist/evaluation/index.d.ts",
+      "import": "./dist/evaluation/index.js"
+    },
     "./package.json": "./package.json"
   },
   "scripts": {

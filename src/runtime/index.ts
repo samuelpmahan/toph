@@ -1,7 +1,4 @@
 // Toph runtime (Phase 2).
-import { mkdir, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
-
 //
 // This module is what `import * as __toph from "toph"` resolves to (package.json's
 // "." export points here). It implements the exact function names/signatures that
@@ -250,6 +247,24 @@ export function finishTrace(): TraceRun {
 	return run;
 }
 
+/** Bytes captured alongside a finished trace. This primitive is platform-neutral;
+ * persistence (for example, writing files in Node) belongs in `toph/run`. */
+export interface FinishedTraceWithAssets {
+	trace: TraceRun;
+	assetBytes: Array<{ asset: AssetRecord; bytes: Uint8Array | Uint8ClampedArray }>;
+}
+
+/** Finishes the active session while retaining captured raster bytes for a caller that
+ * can persist them. Browser consumers can send this bundle to their own storage layer. */
+export function finishTraceWithAssets(): FinishedTraceWithAssets {
+	const session = requireSession('finishTrace');
+	const assetBytes = session.assets.flatMap((asset) => {
+		const bytes = session.rasterBytesById.get(asset.id);
+		return bytes === undefined ? [] : [{ asset, bytes }];
+	});
+	return { trace: finishTrace(), assetBytes };
+}
+
 /** Records the start of one execution of stage `stageId` and returns a fresh
  * stage-invocation id, distinct on every call -- including repeated calls with the same
  * `stageId` (the same logical stage running more than once). */
@@ -488,93 +503,6 @@ export function getRasterBytes(assetId: number): Uint8Array | Uint8ClampedArray 
 	return session.rasterBytesById.get(assetId);
 }
 
-/** Options for a complete, persisted trace lifecycle. */
-export interface WithTophRunOptions {
-  /** Destination directory. It is created recursively when absent. */
-  dir: string;
-  pipeline?: string;
-  /** Compiler manifest to copy into the run directory. */
-  manifest?: unknown;
-  /** Optional compiler source map to copy alongside the manifest. */
-  sourceMap?: unknown;
-}
-
-export interface TophRunResult<T> {
-  value: T;
-  result: T;
-  dir: string;
-  trace: TraceRun;
-  tracePath: string;
-  manifestPath: string;
-  assetFiles: string[];
-}
-
-interface FinishedRun {
-  trace: TraceRun;
-  assetBytes: Array<{ asset: AssetRecord; bytes: Uint8Array | Uint8ClampedArray }>;
-}
-
-function finishTraceWithAssets(): FinishedRun {
-  const session = requireSession('finishTrace');
-  const assetBytes = session.assets.flatMap((asset) => {
-    const bytes = session.rasterBytesById.get(asset.id);
-    return bytes === undefined ? [] : [{ asset, bytes }];
-  });
-  return { trace: finishTrace(), assetBytes };
-}
-
-function safeAssetName(name: string): string {
-  const safe = name.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '');
-  return safe || 'asset';
-}
-
-/** Starts a trace, executes callback, and persists a self-contained run directory. */
-export async function withTophRun<T>(
-  options: WithTophRunOptions,
-  callback: () => T | Promise<T>
-): Promise<TophRunResult<T>> {
-  if (!options.dir) throw new Error('toph: withTophRun() requires a non-empty dir');
-  await mkdir(options.dir, { recursive: true });
-  startTrace({ pipeline: options.pipeline });
-
-  let value!: T;
-  let failure: unknown;
-  let didFail = false;
-  try {
-    value = await callback();
-  } catch (error) {
-    didFail = true;
-    failure = error;
-  }
-
-  const finished = finishTraceWithAssets();
-  const tracePath = join(options.dir, 'trace.json');
-  const manifestPath = join(options.dir, 'manifest.json');
-  const manifest = options.manifest ?? { stages: [], checks: [], assets: [], entityKinds: [] };
-  await writeFile(tracePath, JSON.stringify(finished.trace, null, 2) + '\n', 'utf8');
-  await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
-  if (options.sourceMap !== undefined) {
-    await writeFile(join(options.dir, 'source-map.json'), JSON.stringify(options.sourceMap, null, 2) + '\n', 'utf8');
-  }
-
-  const assetFiles: string[] = [];
-  if (finished.assetBytes.length > 0) {
-    const assetDir = join(options.dir, 'assets');
-    await mkdir(assetDir, { recursive: true });
-    const assetIndex = finished.assetBytes.map(({ asset }) => {
-      const file = `${String(asset.id).padStart(4, '0')}-${safeAssetName(asset.name)}.bin`;
-      assetFiles.push(join('assets', file));
-      return { ...asset, file };
-    });
-    for (let i = 0; i < finished.assetBytes.length; i += 1) {
-      await writeFile(join(assetDir, assetIndex[i].file), finished.assetBytes[i].bytes);
-    }
-    await writeFile(join(assetDir, 'index.json'), JSON.stringify(assetIndex, null, 2) + '\n', 'utf8');
-  }
-
-  if (didFail) throw failure;
-  return { value, result: value, dir: options.dir, trace: finished.trace, tracePath, manifestPath, assetFiles };
-}
 /** Entity ids are the spine of dataflow evidence; object refs are resolved through the
  * session WeakMap. Collections remain ordinary JavaScript arrays. */
 export type EntityRef = number | object;
@@ -602,7 +530,8 @@ export interface DataflowReduceEvent {
 	t: 'reduce';
 	stage: number;
 	inputs: number[];
-	output: number;
+	result: number | string | boolean | null;
+	output?: number;
 }
 export interface DataflowRankEvent {
 	t: 'rank';
@@ -684,7 +613,7 @@ export function recordDataflow(event: DataflowEvent): void {
 		case 'map': ids.push(...event.parents, ...event.children); break;
 		case 'split': ids.push(event.parent, ...event.children); break;
 		case 'merge': ids.push(...event.parents, event.child); if (event.rep !== undefined) ids.push(event.rep); break;
-		case 'reduce': ids.push(...event.inputs, event.output); break;
+		case 'reduce': ids.push(...event.inputs); if (event.output !== undefined) ids.push(event.output); break;
 		case 'rank': ids.push(event.entity); break;
 		case 'select': ids.push(...event.kept, ...event.rejected); break;
 		case 'suppress': ids.push(event.entity); if (event.by !== undefined) ids.push(event.by); break;

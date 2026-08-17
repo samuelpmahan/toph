@@ -2,7 +2,8 @@ import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { snapshotRaster, withTophRun } from '../../src/runtime/index.js';
+import { finishTraceWithAssets, snapshotRaster, startTrace } from '../../src/runtime/index.js';
+import { withTophRun } from '../../src/run/index.js';
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -10,6 +11,15 @@ afterEach(async () => {
 });
 
 describe('withTophRun', () => {
+  it('offers a filesystem-free finished bundle for browser or custom storage adapters', () => {
+    startTrace({ pipeline: 'bundle' });
+    snapshotRaster(3, 'mask', 'mask', new Uint8Array([9, 8]), 2, 1);
+    const finished = finishTraceWithAssets();
+    expect(finished.trace.pipeline).toBe('bundle');
+    expect(finished.assetBytes[0].asset.id).toBe(3);
+    expect([...finished.assetBytes[0].bytes]).toEqual([9, 8]);
+  });
+
   it('persists trace metadata, supplied manifest, source map, and raster bytes', async () => {
     const dir = await mkdtemp(join(tmpdir(), 'toph-run-'));
     dirs.push(dir);

@@ -14,15 +14,25 @@ describe('recordDataflow', () => {
     toph.recordDataflow({ t: 'map', stage, parents: [aId], children: [bId] });
     toph.recordDataflow({ t: 'split', stage, parent: bId, children: [cId, dId] });
     toph.recordDataflow({ t: 'merge', stage, parents: [cId, dId], child: eId, rep: cId });
-    toph.recordDataflow({ t: 'reduce', stage, inputs: [aId, bId], output: eId });
+    toph.recordDataflow({ t: 'reduce', stage, inputs: [aId, bId], result: 'winner', output: eId });
     toph.recordDataflow({ t: 'relate', stage, left: aId, right: eId, join: eId, relation: 'supports' });
     const run = toph.finishTrace();
     expect(run.dataflow).toEqual([
       { t: 'map', stage, parents: [aId], children: [bId] },
       { t: 'split', stage, parent: bId, children: [cId, dId] },
       { t: 'merge', stage, parents: [cId, dId], child: eId, rep: cId },
-      { t: 'reduce', stage, inputs: [aId, bId], output: eId },
+      { t: 'reduce', stage, inputs: [aId, bId], result: 'winner', output: eId },
       { t: 'relate', stage, left: aId, right: eId, join: eId, relation: 'supports' },
+    ]);
+  });
+
+  it('allows a scalar-only reduce result without an entity output', () => {
+    toph.startTrace();
+    const stage = toph.enterStage(12);
+    const [input] = toph.spawnEntities(1, [{}]);
+    toph.recordDataflow({ t: 'reduce', stage, inputs: [input], result: 42 });
+    expect(toph.finishTrace().dataflow).toEqual([
+      { t: 'reduce', stage, inputs: [input], result: 42 },
     ]);
   });
 
