@@ -19,7 +19,7 @@ import {
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const STATIC_INDEX_PATH = join(__dirname, 'static', 'index.html');
-const USABILITY_JS_PATH = join(__dirname, 'static', 'usability.js');
+const VIEWER_JS_PATH = join(__dirname, 'static', 'viewer.js');
 
 export interface ReplayViewerSourceImage {
   path: string;
@@ -115,17 +115,14 @@ export async function startReplayViewer(options: StartReplayViewerOptions): Prom
     const path = url.pathname;
 
     if (method === 'GET' && path === '/') {
-      const rawHtml = await readFile(STATIC_INDEX_PATH, 'utf8');
-      const html = rawHtml.includes('/usability.js')
-        ? rawHtml
-        : rawHtml.replace('</body>', '<script src="/usability.js"></script>\n</body>');
+      const html = await readFile(STATIC_INDEX_PATH, 'utf8');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Content-Length': Buffer.byteLength(html) });
       res.end(html);
       return;
     }
 
-    if (method === 'GET' && path === '/usability.js') {
-      const js = await readFile(USABILITY_JS_PATH, 'utf8');
+    if (method === 'GET' && path === '/viewer.js') {
+      const js = await readFile(VIEWER_JS_PATH, 'utf8');
       res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Content-Length': Buffer.byteLength(js) });
       res.end(js);
       return;

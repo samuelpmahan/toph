@@ -9,7 +9,40 @@ export type AssetKind = 'mask';
 export interface AssetRecord { id: number; name: string; kind: AssetKind; widthPx: number; heightPx: number; }
 export interface EntityRecord { id: number; kindId: number; ordinal: number; attrs: Record<string, number | string | boolean>; parentId?: number; }
 export interface MeasureRecord { stageInvocationId: number; name: string; value: number | string | boolean | null; unit?: string; }
-export interface TraceRun { version: 1; pipeline?: string; stages: StageInvocationRecord[]; elements: ElementRecord[]; checks: CheckRecord[]; assets?: AssetRecord[]; entities?: EntityRecord[]; dataflow?: DataflowEvent[]; measures?: MeasureRecord[]; }
+
+// -----------------------------------------------------------------------------------------
+// Evidence (observational geometry). Optional, presentation-only annotations that preserve
+// the actual source-space pixels/geometry an algorithm already looked at when it produced a
+// measurement or decision. Recording evidence NEVER changes control flow or any verdict --
+// it only lets a viewer draw the literal thing that was measured, registered to the source
+// image. Shapes are in source-image pixel coordinates; a 'component' shape references pixels
+// in a labelmap by its integer label. Trace-diff intentionally ignores evidence.
+export type EvidenceRole = 'measured' | 'current' | 'proposed' | 'historical' | 'threshold' | 'context';
+export type EvidenceShape =
+	| { t: 'point'; x: number; y: number; label?: string }
+	| { t: 'segment'; x1: number; y1: number; x2: number; y2: number; label?: string }
+	| { t: 'polyline'; pts: Array<[number, number]>; closed?: boolean; label?: string }
+	| { t: 'bbox'; x: number; y: number; w: number; h: number; label?: string }
+	| { t: 'circle'; x: number; y: number; r: number; label?: string }
+	| { t: 'angle'; x: number; y: number; fromDeg: number; toDeg: number; radius: number; label?: string }
+	| { t: 'vector'; x: number; y: number; dx: number; dy: number; label?: string }
+	| { t: 'component'; assetId: number; label: number };
+export interface EvidenceRecord {
+	stageInvocationId: number;
+	entityId?: number;       // entity this evidence is about, if any
+	label?: string;          // human name of the measurement/decision, e.g. "Forward gate angle"
+	measure?: string;        // links to a MeasureRecord.name at this stage, if any
+	checkId?: number;        // links to a CheckRecord.checkId at this stage, if any
+	value?: number | string | boolean;
+	unit?: string;
+	operator?: CheckOperator;
+	threshold?: number;
+	decision?: string;       // resulting decision label, e.g. "SWAP" | "KEEP" | "PASS" | "FAIL"
+	role?: EvidenceRole;
+	shapes: EvidenceShape[];
+}
+
+export interface TraceRun { version: 1; pipeline?: string; stages: StageInvocationRecord[]; elements: ElementRecord[]; checks: CheckRecord[]; assets?: AssetRecord[]; entities?: EntityRecord[]; dataflow?: DataflowEvent[]; measures?: MeasureRecord[]; evidence?: EvidenceRecord[]; }
 export interface StartTraceOptions { pipeline?: string; }
 
 interface Session {
@@ -21,6 +54,7 @@ interface Session {
 	entities: EntityRecord[];
 	dataflow: DataflowEvent[];
 	measures: MeasureRecord[];
+	evidence: EvidenceRecord[];
 	nextStageInvocationId: number;
 	nextElementId: number;
 	nextEntityId: number;
@@ -39,7 +73,7 @@ function requireSession(fnName: string): Session {
 
 export function startTrace(opts: StartTraceOptions = {}): void {
 	if (active !== null) throw new Error('toph: startTrace() was called while a trace session is already active. Call finishTrace() to end the current session before starting a new one.');
-	active = { pipeline: opts.pipeline, stages: [], elements: [], checks: [], assets: [], entities: [], dataflow: [], measures: [], nextStageInvocationId: 1, nextElementId: 1, nextEntityId: 1, seqByStageId: new Map(), nextOrdinalByStageInvocation: new Map(), elementsById: new Map(), rasterBytesById: new Map(), entityIdByRef: new WeakMap() };
+	active = { pipeline: opts.pipeline, stages: [], elements: [], checks: [], assets: [], entities: [], dataflow: [], measures: [], evidence: [], nextStageInvocationId: 1, nextElementId: 1, nextEntityId: 1, seqByStageId: new Map(), nextOrdinalByStageInvocation: new Map(), elementsById: new Map(), rasterBytesById: new Map(), entityIdByRef: new WeakMap() };
 }
 
 export function finishTrace(): TraceRun {
@@ -50,6 +84,7 @@ export function finishTrace(): TraceRun {
 	if (session.entities.length > 0) run.entities = session.entities;
 	if (session.dataflow.length > 0) run.dataflow = session.dataflow;
 	if (session.measures.length > 0) run.measures = session.measures;
+	if (session.evidence.length > 0) run.evidence = session.evidence;
 	active = null;
 	return run;
 }
@@ -145,6 +180,23 @@ export function recordMeasure(stageInvocationId: number, name: string, value: nu
 	const record: MeasureRecord = { stageInvocationId, name, value };
 	if (unit !== undefined) record.unit = unit;
 	session.measures.push(record);
+}
+
+function copyEvidenceShape(shape: EvidenceShape): EvidenceShape {
+	return shape.t === 'polyline' ? { ...shape, pts: shape.pts.map(([x, y]) => [x, y] as [number, number]) } : { ...shape };
+}
+/**
+ * Records observational evidence for a stage/entity: the actual source-space geometry that a
+ * measurement or decision was computed from, plus its value/threshold/decision. Purely
+ * additive -- it does not touch elements, checks, kept flags, or dataflow, so it can never
+ * change what the pipeline decided. Validates that the referenced stage (and entity, if given)
+ * exist in the current trace so evidence can always be resolved by a viewer.
+ */
+export function recordEvidence(record: EvidenceRecord): void {
+	const session = requireSession('recordEvidence');
+	requireDataflowStage(session, record.stageInvocationId);
+	if (record.entityId !== undefined) requireDataflowEntity(session, record.entityId);
+	session.evidence.push({ ...record, shapes: record.shapes.map(copyEvidenceShape) });
 }
 
 function copyDataflowEvent(event: DataflowEvent): DataflowEvent {

@@ -2,3 +2,4 @@ node_modules/
 .toph/
 dist/
 *.log
+artifacts/

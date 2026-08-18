@@ -6,10 +6,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
-const src = join(repoRoot, 'src', 'viewer', 'static', 'index.html');
+const srcDir = join(repoRoot, 'src', 'viewer', 'static');
 const destDir = join(repoRoot, 'dist', 'viewer', 'static');
-const dest = join(destDir, 'index.html');
 
 await mkdir(destDir, { recursive: true });
-await copyFile(src, dest);
-console.log(`copied ${src} -> ${dest}`);
+for (const file of ['index.html', 'viewer.js']) {
+  await copyFile(join(srcDir, file), join(destDir, file));
+  console.log(`copied ${join(srcDir, file)} -> ${join(destDir, file)}`);
+}

@@ -471,7 +471,9 @@ export function stagesEquivalentThrough(
   }
   for (let i = 0; i < checksA.length; i += 1) {
     if (!jsonEqual(checksA[i], checksB[i])) {
-      return `check[${i}] differs: ${JSON.stringify(checksA[i])} vs ${JSON.stringify(checksB[i])}`;
+      const ca = checksA[i];
+      const cb = checksB[i];
+      return `check ${ca.checkId} differs: ${ca.value} ${ca.operator} ${ca.threshold} (${ca.pass ? 'pass' : 'fail'}) vs ${cb.value} ${cb.operator} ${cb.threshold} (${cb.pass ? 'pass' : 'fail'})`;
     }
   }
 
@@ -482,7 +484,8 @@ export function stagesEquivalentThrough(
   }
   for (let i = 0; i < measuresA.length; i += 1) {
     if (!jsonEqual(measuresA[i], measuresB[i])) {
-      return `measure[${i}] differs: ${JSON.stringify(measuresA[i])} vs ${JSON.stringify(measuresB[i])}`;
+      const name = measuresA[i].name === measuresB[i].name ? `"${measuresA[i].name}"` : `"${measuresA[i].name}" vs "${measuresB[i].name}"`;
+      return `measure ${name} differs: ${measuresA[i].value} vs ${measuresB[i].value}`;
     }
   }
 
