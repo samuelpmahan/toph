@@ -99,3 +99,42 @@ without being an active repository workflow. See `examples/heritage-first-loss/`
 complete trace and inspection fixture.
 
 Consumer-side baseline comparison is available from `toph/evaluation`.
+
+## Replay viewer
+
+`toph/viewer` starts a local, desktop-first diagnostic UI over a counterfactual replay
+session (see `toph/replay`): one raster pane with entity/relation overlays, a stage
+scrubber, a parameter pane that drives new counterfactual runs, an experiment tree, an
+A/B diff panel, and a grid-search form. It is a plain Node HTTP server plus one static
+HTML/CSS/JS page -- no framework, no build step, no new dependencies. It stays
+application-generic: every label on the page comes from adapter/manifest/summary data,
+never from hardcoded domain vocabulary.
+
+```ts
+import { startReplayViewer } from 'toph/viewer';
+
+const { port, close } = await startReplayViewer({
+  sessionDir: '.toph/replay-sessions/example',
+  adapter: myReplayAdapter,          // see toph/replay's ReplayAdapter contract
+  port: 4173,                        // optional, defaults to 4173
+  sourceImage: { path: 'fixture.png', contentType: 'image/png' }, // optional
+});
+console.log(`toph replay viewer on http://localhost:${port}`);
+// later: await close();
+```
+
+Opening the server ensures a baseline run exists, so the viewer always has data to show.
+
+Endpoints:
+
+- `GET /` -- the static viewer page.
+- `GET /api/session` -- pipeline id, source, code version, defaults, param schema, all runs.
+- `GET /api/run/:id` -- one `RunRecord`.
+- `GET /api/run/:id/trace` / `/final` / `/manifest` / `/labelmaps` -- the run's stored artifacts (404 if absent).
+- `GET /api/source-image` -- the configured source image bytes (404 if none configured).
+- `GET /api/diff?a=<runId>&b=<runId>` -- `{ configDiff, summaryDiff, firstDivergentStage }`; `firstDivergentStage` (when non-null) additionally carries a `stageName` resolved server-side from manifest data.
+- `POST /api/replay` `{ parentRunId, patch, label? }` -- runs a full counterfactual re-execution via the adapter, returns the new `RunRecord`.
+- `POST /api/grid` `{ parentRunId, axes }` -- cartesian-product grid search, returns the new `RunRecord[]`.
+
+Errors are always JSON `{ error }` with a 4xx/5xx status. Replays and grid runs are
+awaited synchronously (they can take seconds); there is no job queue.
