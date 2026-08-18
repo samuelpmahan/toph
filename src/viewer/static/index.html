@@ -1,0 +1,1007 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>toph replay viewer</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; background: #12141a; color: #d8dee9; font: 12px/1.4 "SF Mono", Menlo, Consolas, monospace; }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+  header { display: flex; align-items: baseline; gap: 12px; padding: 6px 10px; background: #1b1e27; border-bottom: 1px solid #2a2e3a; flex: 0 0 auto; }
+  header h1 { font-size: 13px; margin: 0; color: #9fe6a0; }
+  header .meta { color: #7a8296; }
+  #main { display: flex; flex: 1 1 auto; min-height: 0; }
+  #leftPane { flex: 1 1 60%; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid #2a2e3a; }
+  #canvasWrap { flex: 1 1 auto; overflow: auto; background: #0a0b0f; position: relative; }
+  canvas#stage { display: block; cursor: crosshair; background: #05060a; }
+  #inspector { flex: 0 0 auto; max-height: 32%; overflow: auto; border-top: 1px solid #2a2e3a; padding: 6px 10px; background: #14161d; }
+  #rightPane { flex: 0 0 380px; display: flex; flex-direction: column; overflow-y: auto; }
+  section { border-bottom: 1px solid #2a2e3a; padding: 8px 10px; }
+  section h2 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #7a8296; margin: 0 0 6px 0; }
+  #scrubber { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 4px; }
+  .stagechip { flex: 0 0 auto; padding: 3px 6px; background: #232733; border: 1px solid #333849; border-radius: 3px; cursor: pointer; white-space: nowrap; font-size: 11px; }
+  .stagechip.active { background: #35507a; border-color: #5a7fb8; color: #fff; }
+  #stageMeasures { margin-top: 6px; color: #9aa4bb; font-size: 11px; }
+  .paramrow { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+  .paramrow label { flex: 0 0 170px; overflow: hidden; text-overflow: ellipsis; color: #b7bfd4; }
+  .paramrow input[type=number] { width: 64px; }
+  .paramrow input[type=range] { flex: 1 1 auto; }
+  button { background: #232733; color: #d8dee9; border: 1px solid #3a3f52; border-radius: 3px; padding: 4px 8px; cursor: pointer; font: inherit; }
+  button:hover { background: #2c3140; }
+  button.primary { background: #2d5f3e; border-color: #3f8a56; }
+  button.primary:hover { background: #367449; }
+  button:disabled { opacity: 0.4; cursor: default; }
+  #tree ul { list-style: none; margin: 0; padding-left: 14px; }
+  #tree > ul { padding-left: 0; }
+  #tree li { margin: 1px 0; }
+  .treenode { padding: 2px 4px; border-radius: 3px; cursor: pointer; }
+  .treenode:hover { background: #1f2330; }
+  .treenode.selected { background: #35507a; color: #fff; }
+  .treenode.pinnedA { outline: 1px solid #e0a840; }
+  .treenode.pinnedB { outline: 1px solid #4098e0; }
+  .runlabel { color: #d8dee9; }
+  .runpatch { color: #9aa4bb; }
+  .runsummary { color: #7a8296; }
+  #abPanel .abrow { display: flex; gap: 6px; margin-bottom: 6px; }
+  table { border-collapse: collapse; width: 100%; font-size: 11px; }
+  th, td { border: 1px solid #2a2e3a; padding: 3px 6px; text-align: left; white-space: nowrap; }
+  th { cursor: pointer; background: #1b1e27; position: sticky; top: 0; }
+  #runsTableWrap { flex: 0 0 auto; max-height: 220px; overflow: auto; border-top: 1px solid #2a2e3a; background: #14161d; }
+  .diffTable td.a { color: #e0a840; }
+  .diffTable td.b { color: #4098e0; }
+  .err { color: #e06868; }
+  .ok { color: #79c979; }
+  .small { color: #7a8296; font-size: 10px; }
+  input[type=text] { background: #1b1e27; border: 1px solid #3a3f52; color: #d8dee9; font: inherit; padding: 2px 4px; }
+  select { background: #1b1e27; color: #d8dee9; border: 1px solid #3a3f52; font: inherit; }
+  fieldset { border: 1px solid #2a2e3a; margin-bottom: 6px; }
+  legend { color: #7a8296; font-size: 10px; }
+  .gridrow { display: flex; gap: 4px; align-items: center; margin-bottom: 4px; }
+  .kbd { color: #7a8296; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>TOPH REPLAY VIEWER</h1>
+    <span class="meta" id="pipelineMeta"></span>
+  </header>
+  <div id="main">
+    <div id="leftPane">
+      <div id="canvasWrap"><canvas id="stage" width="800" height="600"></canvas></div>
+      <div id="inspector"><div class="small">click an entity marker to inspect it</div></div>
+    </div>
+    <div id="rightPane">
+      <section id="scrubberSection">
+        <h2>stage scrubber <span class="kbd small">(&larr;/&rarr;)</span></h2>
+        <div id="scrubber"></div>
+        <div id="stageMeasures"></div>
+        <label class="small"><input type="checkbox" id="labelmapToggle" /> tint labelmap overlay</label>
+        <label class="small"><input type="checkbox" id="abOverlayToggle" /> A/B overlay mode</label>
+      </section>
+      <section id="paramSection">
+        <h2>parameters</h2>
+        <div id="paramPane"></div>
+        <button class="primary" id="applyBtn" disabled>apply &rarr; new run</button>
+        <div class="small" id="patchPreview"></div>
+      </section>
+      <section id="gridSection">
+        <h2>grid</h2>
+        <div id="gridForm"></div>
+        <button id="gridBtn">run grid &rarr; children</button>
+        <div class="small" id="gridStatus"></div>
+      </section>
+      <section id="treeSection">
+        <h2>experiment tree</h2>
+        <div id="tree"></div>
+      </section>
+      <section id="abSection">
+        <h2>a/b</h2>
+        <div id="abPanel"></div>
+      </section>
+    </div>
+  </div>
+  <div id="runsTableWrap">
+    <table id="runsTable"><thead></thead><tbody></tbody></table>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------------------------
+  // state
+  // ---------------------------------------------------------------------------------
+  var state = {
+    session: null,        // /api/session payload
+    selectedRunId: null,
+    run: null,             // RunRecord of selected run
+    trace: null,
+    manifest: null,        // may be null
+    final: null,           // may be null
+    labelmaps: null,       // may be null
+    scrubIndex: -1,        // index into trace.stages (array order == invocation order); -1 = none yet
+    showLabelmap: false,
+    abOverlay: false,
+    pinnedA: null,
+    pinnedB: null,
+    diff: null,
+    sourceImageAvailable: false,
+    sortKey: null,
+    sortDir: 1,
+  };
+
+  var img = new Image();
+  img.onload = function () { draw(); };
+
+  // ---------------------------------------------------------------------------------
+  // fetch helpers
+  // ---------------------------------------------------------------------------------
+  function getJson(url) {
+    return fetch(url).then(function (res) {
+      if (!res.ok) return res.json().catch(function () { return { error: res.statusText }; }).then(function (body) { throw new Error((body && body.error) || res.statusText); });
+      return res.json();
+    });
+  }
+  function getJsonOrNull(url) {
+    return getJson(url).catch(function () { return null; });
+  }
+  function postJson(url, body) {
+    return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(function (res) {
+      return res.json().then(function (parsed) {
+        if (!res.ok) throw new Error((parsed && parsed.error) || res.statusText);
+        return parsed;
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------------------------
+  // dot-path helpers (mirrors Toph's replay-core semantics for reading, not writing)
+  // ---------------------------------------------------------------------------------
+  function getAtPath(root, path) {
+    var parts = path.split('.');
+    var cursor = root;
+    for (var i = 0; i < parts.length; i++) {
+      if (cursor === null || typeof cursor !== 'object') return undefined;
+      cursor = cursor[parts[i]];
+    }
+    return cursor;
+  }
+
+  // ---------------------------------------------------------------------------------
+  // client-side RLE labelmap decode (must stay bit-for-bit with src/cli/labelmap.ts)
+  // ---------------------------------------------------------------------------------
+  function decodeLabelmap(doc) {
+    var pixelCount = doc.widthPx * doc.heightPx;
+    var out = new Uint32Array(pixelCount);
+    var cursor = 0;
+    for (var i = 0; i < doc.runs.length; i++) {
+      var value = doc.runs[i][0];
+      var count = doc.runs[i][1];
+      out.fill(value, cursor, cursor + count);
+      cursor += count;
+    }
+    return out;
+  }
+  function labelAt(decoded, widthPx, heightPx, x, y) {
+    if (x < 0 || y < 0 || x >= widthPx || y >= heightPx) return 0;
+    return decoded[y * widthPx + x];
+  }
+  function entityForLabel(label, entities, entityIds) {
+    if (label <= 0) return null;
+    if (entityIds) {
+      var id = entityIds[label - 1];
+      if (id === undefined) return null;
+      for (var i = 0; i < entities.length; i++) if (entities[i].id === id) return entities[i];
+      return null;
+    }
+    var matches = entities.filter(function (e) { return e.ordinal === label - 1; });
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  // ---------------------------------------------------------------------------------
+  // entity/coordinate probing (generic: no application-specific attribute names beyond
+  // the x/y-shaped conventions the contract calls out)
+  // ---------------------------------------------------------------------------------
+  var COORD_PAIRS = [['x', 'y'], ['xPx', 'yPx']];
+  function coordsOf(entity) {
+    if (!entity || !entity.attrs) return null;
+    for (var i = 0; i < COORD_PAIRS.length; i++) {
+      var xk = COORD_PAIRS[i][0], yk = COORD_PAIRS[i][1];
+      var x = entity.attrs[xk], y = entity.attrs[yk];
+      if (typeof x === 'number' && typeof y === 'number') return { x: x, y: y };
+    }
+    return null;
+  }
+  function kindName(kindId) {
+    if (state.manifest && state.manifest.entityKinds) {
+      var found = state.manifest.entityKinds.find(function (k) { return k.id === kindId; });
+      if (found) return found.name;
+    }
+    return 'kind#' + kindId;
+  }
+  function stageName(stageId) {
+    if (state.manifest && state.manifest.stages) {
+      var found = state.manifest.stages.find(function (s) { return s.id === stageId; });
+      if (found) return found.name;
+    }
+    return 'stage#' + stageId;
+  }
+  function entitiesOf(trace) {
+    return (trace && trace.entities) || [];
+  }
+
+  // Invocation array-index (== execution order) for a given invocationId, within trace.stages.
+  function invocationIndex(trace, invocationId) {
+    for (var i = 0; i < trace.stages.length; i++) if (trace.stages[i].invocationId === invocationId) return i;
+    return -1;
+  }
+
+  function keptStateAt(trace, entityId, maxIndex) {
+    // Elements share the id space with their source entity when created via a ref
+    // (see runtime enterElement()). Find the most recent element record for this id at
+    // or before maxIndex; report its kept flag, else 'unknown' (never touched by a
+    // filter stage within the scrub window).
+    var best = null, bestIndex = -1;
+    for (var i = 0; i < trace.elements.length; i++) {
+      var el = trace.elements[i];
+      if (el.id !== entityId) continue;
+      var idx = invocationIndex(trace, el.stageInvocationId);
+      if (idx <= maxIndex && idx > bestIndex) { bestIndex = idx; best = el; }
+    }
+    return best ? (best.kept ? 'kept' : 'rejected') : 'unknown';
+  }
+
+  // ---------------------------------------------------------------------------------
+  // session / run loading
+  // ---------------------------------------------------------------------------------
+  function loadSession() {
+    return getJson('/api/session').then(function (session) {
+      state.session = session;
+      document.getElementById('pipelineMeta').textContent =
+        session.pipelineId + '  source=' + (session.source && session.source.name) + '  runs=' + session.runs.length;
+      renderTree();
+      renderParamPane();
+      renderGridForm();
+      renderTable();
+      if (state.selectedRunId === null) {
+        var baseline = session.runs.find(function (r) { return r.parentRunId === null; });
+        if (baseline) selectRun(baseline.runId);
+      } else {
+        // keep selection but refresh label bits
+        renderAbPanel();
+      }
+    });
+  }
+
+  function selectRun(runId) {
+    state.selectedRunId = runId;
+    state.diff = null;
+    return Promise.all([
+      getJson('/api/run/' + encodeURIComponent(runId)),
+      getJson('/api/run/' + encodeURIComponent(runId) + '/trace'),
+      getJsonOrNull('/api/run/' + encodeURIComponent(runId) + '/manifest'),
+      getJsonOrNull('/api/run/' + encodeURIComponent(runId) + '/final'),
+      getJsonOrNull('/api/run/' + encodeURIComponent(runId) + '/labelmaps'),
+    ]).then(function (results) {
+      state.run = results[0];
+      state.trace = results[1];
+      state.manifest = results[2];
+      state.final = results[3];
+      state.labelmaps = results[4];
+      state.scrubIndex = state.trace.stages.length - 1;
+      renderScrubber();
+      renderParamPane();
+      renderTree();
+      renderAbPanel();
+      clearInspector();
+      draw();
+    });
+  }
+
+  // ---------------------------------------------------------------------------------
+  // stage scrubber
+  // ---------------------------------------------------------------------------------
+  function renderScrubber() {
+    var el = document.getElementById('scrubber');
+    el.innerHTML = '';
+    if (!state.trace) return;
+    state.trace.stages.forEach(function (inv, index) {
+      var chip = document.createElement('div');
+      chip.className = 'stagechip' + (index === state.scrubIndex ? ' active' : '');
+      chip.textContent = stageName(inv.stageId) + ' #' + inv.seq;
+      chip.title = 'invocationId=' + inv.invocationId + ' stageId=' + inv.stageId + ' seq=' + inv.seq;
+      chip.addEventListener('click', function () { setScrub(index); });
+      el.appendChild(chip);
+    });
+    renderStageMeasures();
+  }
+  function setScrub(index) {
+    if (!state.trace) return;
+    state.scrubIndex = Math.max(0, Math.min(state.trace.stages.length - 1, index));
+    renderScrubber();
+    draw();
+  }
+  function renderStageMeasures() {
+    var el = document.getElementById('stageMeasures');
+    if (!state.trace || state.scrubIndex < 0) { el.textContent = ''; return; }
+    var inv = state.trace.stages[state.scrubIndex];
+    var measures = (state.trace.measures || []).filter(function (m) { return m.stageInvocationId === inv.invocationId; });
+    if (measures.length === 0) { el.textContent = '(no measures at this stage)'; return; }
+    el.innerHTML = measures.map(function (m) {
+      return m.name + ' = ' + m.value + (m.unit ? ' ' + m.unit : '');
+    }).join('<br/>');
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (!state.trace) return;
+    if (e.key === 'ArrowRight') setScrub(state.scrubIndex + 1);
+    else if (e.key === 'ArrowLeft') setScrub(state.scrubIndex - 1);
+  });
+
+  // ---------------------------------------------------------------------------------
+  // main raster pane
+  // ---------------------------------------------------------------------------------
+  var canvas = document.getElementById('stage');
+  var ctx = canvas.getContext('2d');
+
+  function includedInvocationIds(trace, maxIndex) {
+    var ids = {};
+    for (var i = 0; i <= maxIndex && i < trace.stages.length; i++) ids[trace.stages[i].invocationId] = true;
+    return ids;
+  }
+
+  function draw() {
+    var w = (state.session && state.session.source && state.session.source.widthPx) || (img.complete && img.naturalWidth) || canvas.width;
+    var h = (state.session && state.session.source && state.session.source.heightPx) || (img.complete && img.naturalHeight) || canvas.height;
+    canvas.width = w;
+    canvas.height = h;
+    ctx.fillStyle = '#05060a';
+    ctx.fillRect(0, 0, w, h);
+    if (state.sourceImageAvailable && img.complete && img.naturalWidth > 0) {
+      ctx.drawImage(img, 0, 0, w, h);
+    }
+
+    if (state.showLabelmap && state.labelmaps && state.labelmaps.length > 0) {
+      drawLabelmapOverlay(state.labelmaps[0]);
+    }
+
+    if (!state.trace) return;
+
+    if (state.abOverlay && state.pinnedA && state.pinnedB) {
+      drawAbOverlay();
+      return;
+    }
+
+    drawRunOverlay(state.trace, state.manifest, '#ffd166', '#5ad1e6');
+  }
+
+  function drawLabelmapOverlay(doc) {
+    var decoded = decodeLabelmap(doc);
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var data = imageData.data;
+    for (var y = 0; y < doc.heightPx && y < canvas.height; y++) {
+      for (var x = 0; x < doc.widthPx && x < canvas.width; x++) {
+        var label = decoded[y * doc.widthPx + x];
+        if (label === 0) continue;
+        var idx = (y * canvas.width + x) * 4;
+        var hue = (label * 47) % 360;
+        var rgb = hslToRgb(hue / 360, 0.6, 0.5);
+        data[idx] = (data[idx] + rgb[0]) / 2;
+        data[idx + 1] = (data[idx + 1] + rgb[1]) / 2;
+        data[idx + 2] = (data[idx + 2] + rgb[2]) / 2;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }
+  function hslToRgb(h, s, l) {
+    var r, g, b;
+    if (s === 0) { r = g = b = l; }
+    else {
+      var hue2rgb = function (p, q, t) {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      var p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1 / 3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1 / 3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  }
+
+  function drawRunOverlay(trace, manifest, markerColor, relateColor) {
+    var entities = entitiesOf(trace);
+    var maxIndex = state.scrubIndex;
+    var included = includedInvocationIds(trace, maxIndex);
+
+    // relate dataflow events at or before the scrub position
+    var byId = {};
+    entities.forEach(function (e) { byId[e.id] = e; });
+    (trace.dataflow || []).forEach(function (event) {
+      if (event.t !== 'relate') return;
+      var idx = invocationIndex(trace, event.stage);
+      if (idx > maxIndex) return;
+      var left = coordsOf(byId[event.left]);
+      var right = coordsOf(byId[event.right]);
+      if (!left || !right) return;
+      var atCurrentStage = idx === maxIndex;
+      ctx.strokeStyle = relateColor;
+      ctx.lineWidth = atCurrentStage ? 2.5 : 1;
+      ctx.globalAlpha = atCurrentStage ? 1 : 0.4;
+      ctx.beginPath();
+      ctx.moveTo(left.x, left.y);
+      ctx.lineTo(right.x, right.y);
+      ctx.stroke();
+      if (event.relation) {
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = relateColor;
+        ctx.font = '9px monospace';
+        ctx.fillText(event.relation, (left.x + right.x) / 2, (left.y + right.y) / 2);
+      }
+      ctx.globalAlpha = 1;
+    });
+
+    // coordinate-bearing entity markers
+    entities.forEach(function (entity) {
+      var coords = coordsOf(entity);
+      if (!coords) return;
+      var kept = keptStateAt(trace, entity.id, maxIndex);
+      ctx.fillStyle = kept === 'rejected' ? '#e06868' : kept === 'kept' ? markerColor : '#8a92a8';
+      ctx.beginPath();
+      ctx.arc(coords.x, coords.y, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.font = '9px monospace';
+      ctx.fillText(kindName(entity.kindId) + '#' + entity.ordinal, coords.x + 5, coords.y - 4);
+    });
+  }
+
+  function drawAbOverlay() {
+    Promise.all([
+      getJson('/api/run/' + encodeURIComponent(state.pinnedA) + '/trace'),
+      getJsonOrNull('/api/run/' + encodeURIComponent(state.pinnedA) + '/manifest'),
+      getJson('/api/run/' + encodeURIComponent(state.pinnedB) + '/trace'),
+      getJsonOrNull('/api/run/' + encodeURIComponent(state.pinnedB) + '/manifest'),
+    ]).then(function (r) {
+      drawRunOverlayFull(r[0], '#e0a840');
+      drawRunOverlayFull(r[2], '#4098e0');
+    });
+  }
+  function drawRunOverlayFull(trace, color) {
+    var maxIndex = trace.stages.length - 1;
+    var entities = entitiesOf(trace);
+    var byId = {};
+    entities.forEach(function (e) { byId[e.id] = e; });
+    (trace.dataflow || []).forEach(function (event) {
+      if (event.t !== 'relate') return;
+      var left = coordsOf(byId[event.left]);
+      var right = coordsOf(byId[event.right]);
+      if (!left || !right) return;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath();
+      ctx.moveTo(left.x, left.y);
+      ctx.lineTo(right.x, right.y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+    entities.forEach(function (entity) {
+      var coords = coordsOf(entity);
+      if (!coords) return;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(coords.x, coords.y, 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  document.getElementById('labelmapToggle').addEventListener('change', function (e) {
+    state.showLabelmap = e.target.checked;
+    draw();
+  });
+  document.getElementById('abOverlayToggle').addEventListener('change', function (e) {
+    state.abOverlay = e.target.checked;
+    draw();
+  });
+
+  // click -> inspect
+  canvas.addEventListener('click', function (evt) {
+    if (!state.trace) return;
+    var rect = canvas.getBoundingClientRect();
+    var scaleX = canvas.width / rect.width;
+    var scaleY = canvas.height / rect.height;
+    var x = (evt.clientX - rect.left) * scaleX;
+    var y = (evt.clientY - rect.top) * scaleY;
+    inspectAt(Math.round(x), Math.round(y));
+  });
+
+  function inspectAt(x, y) {
+    var entities = entitiesOf(state.trace);
+    var target = null;
+    if (state.labelmaps && state.labelmaps.length > 0) {
+      var doc = state.labelmaps[0];
+      var decoded = decodeLabelmap(doc);
+      var label = labelAt(decoded, doc.widthPx, doc.heightPx, x, y);
+      target = entityForLabel(label, entities, doc.entityIds);
+    }
+    if (!target) {
+      var best = null, bestDist = 18;
+      entities.forEach(function (e) {
+        var c = coordsOf(e);
+        if (!c) return;
+        var d = Math.hypot(c.x - x, c.y - y);
+        if (d <= bestDist) { bestDist = d; best = e; }
+      });
+      target = best;
+    }
+    if (!target) { clearInspector(); return; }
+    renderInspector(target);
+  }
+
+  function clearInspector() {
+    document.getElementById('inspector').innerHTML = '<div class="small">click an entity marker to inspect it</div>';
+  }
+
+  function renderInspector(entity) {
+    var trace = state.trace;
+    var lines = [];
+    lines.push('<b>entity #' + entity.id + '</b> kind=' + kindName(entity.kindId) + ' ordinal=' + entity.ordinal +
+      (entity.parentId !== undefined ? ' parentId=' + entity.parentId : ''));
+    lines.push('attrs: ' + JSON.stringify(entity.attrs));
+
+    // lineage: dataflow events referencing this entity id, in stage order
+    var lineage = [];
+    (trace.dataflow || []).forEach(function (event) {
+      var refs = dataflowRefs(event);
+      if (refs.indexOf(entity.id) === -1) return;
+      lineage.push({ idx: invocationIndex(trace, event.stage), event: event });
+    });
+    lineage.sort(function (a, b) { return a.idx - b.idx; });
+    lines.push('<br/><b>lineage</b> (dataflow events referencing this entity, in stage order):');
+    if (lineage.length === 0) lines.push('(none recorded)');
+    lineage.forEach(function (item) {
+      var inv = trace.stages[item.idx];
+      lines.push('&nbsp;&nbsp;[' + stageName(inv.stageId) + ' #' + inv.seq + '] ' + JSON.stringify(item.event));
+    });
+
+    // checks + measures at stages that touched this entity (via shared id space with elements)
+    var touchedInvocationIds = {};
+    trace.elements.forEach(function (el) { if (el.id === entity.id) touchedInvocationIds[el.stageInvocationId] = true; });
+    lineage.forEach(function (item) { touchedInvocationIds[item.event.stage] = true; });
+
+    var checks = trace.checks.filter(function (c) { return c.elementId === entity.id; });
+    lines.push('<br/><b>checks</b> against this entity:');
+    if (checks.length === 0) lines.push('(none)');
+    checks.forEach(function (c) {
+      var inv = trace.stages.find(function (s) { return s.invocationId === c.stageInvocationId; });
+      lines.push('&nbsp;&nbsp;[' + (inv ? stageName(inv.stageId) + ' #' + inv.seq : 'invocation ' + c.stageInvocationId) + '] ' +
+        'checkId=' + c.checkId + ' ' + c.operator + ' value=' + c.value + ' threshold=' + c.threshold + ' -> ' + (c.pass ? '<span class="ok">pass</span>' : '<span class="err">fail</span>'));
+    });
+
+    var measures = (trace.measures || []).filter(function (m) { return touchedInvocationIds[m.stageInvocationId]; });
+    lines.push('<br/><b>measures</b> at touched stages:');
+    if (measures.length === 0) lines.push('(none)');
+    measures.forEach(function (m) {
+      var inv = trace.stages.find(function (s) { return s.invocationId === m.stageInvocationId; });
+      lines.push('&nbsp;&nbsp;[' + (inv ? stageName(inv.stageId) + ' #' + inv.seq : 'invocation ' + m.stageInvocationId) + '] ' + m.name + ' = ' + m.value + (m.unit ? ' ' + m.unit : ''));
+    });
+
+    // first event where the entity stops appearing
+    var maxTouchedIdx = -1;
+    Object.keys(touchedInvocationIds).forEach(function (invId) {
+      var idx = invocationIndex(trace, Number(invId));
+      if (idx > maxTouchedIdx) maxTouchedIdx = idx;
+    });
+    var lastKept = keptStateAt(trace, entity.id, trace.stages.length - 1);
+    if (maxTouchedIdx >= 0 && maxTouchedIdx < trace.stages.length - 1) {
+      var lastInv = trace.stages[maxTouchedIdx];
+      lines.push('<br/><b>evidence stops</b> after [' + stageName(lastInv.stageId) + ' #' + lastInv.seq + '] (final observed state: ' + lastKept + '); no further stage mentions this entity.');
+    } else if (maxTouchedIdx === trace.stages.length - 1) {
+      lines.push('<br/>tracked through the final recorded stage invocation (final observed state: ' + lastKept + ').');
+    }
+
+    document.getElementById('inspector').innerHTML = lines.join('<br/>');
+  }
+
+  function dataflowRefs(event) {
+    var ids = [];
+    switch (event.t) {
+      case 'map': ids = ids.concat(event.parents, event.children); break;
+      case 'split': ids = ids.concat([event.parent], event.children); break;
+      case 'merge': ids = ids.concat(event.parents, [event.child]); if (event.rep !== undefined) ids.push(event.rep); break;
+      case 'reduce': ids = ids.concat(event.inputs); if (event.output !== undefined) ids.push(event.output); break;
+      case 'rank': ids = [event.entity]; break;
+      case 'select': ids = ids.concat(event.kept, event.rejected); break;
+      case 'suppress': ids = [event.entity]; if (event.by !== undefined) ids.push(event.by); break;
+      case 'relate': ids = [event.left, event.right]; if (event.join !== undefined) ids.push(event.join); break;
+    }
+    return ids;
+  }
+
+  // ---------------------------------------------------------------------------------
+  // parameter pane
+  // ---------------------------------------------------------------------------------
+  var paramControls = {}; // path -> { input, spec }
+
+  function renderParamPane() {
+    var el = document.getElementById('paramPane');
+    el.innerHTML = '';
+    paramControls = {};
+    if (!state.session || !state.run) return;
+    state.session.paramSchema.forEach(function (spec) {
+      var row = document.createElement('div');
+      row.className = 'paramrow';
+      var label = document.createElement('label');
+      label.textContent = spec.label;
+      label.title = spec.path;
+      row.appendChild(label);
+
+      var currentValue = getAtPath(state.run.effectiveConfig, spec.path);
+      var input;
+      if (spec.type === 'boolean') {
+        input = document.createElement('input');
+        input.type = 'checkbox';
+        input.checked = currentValue === undefined ? spec.default : !!currentValue;
+      } else if (spec.type === 'number') {
+        input = document.createElement('input');
+        input.type = 'range';
+        if (spec.min !== undefined) input.min = String(spec.min);
+        if (spec.max !== undefined) input.max = String(spec.max);
+        if (spec.step !== undefined) input.step = String(spec.step);
+        input.value = String(currentValue === undefined ? spec.default : currentValue);
+        var numOut = document.createElement('input');
+        numOut.type = 'number';
+        numOut.value = input.value;
+        if (spec.min !== undefined) numOut.min = String(spec.min);
+        if (spec.max !== undefined) numOut.max = String(spec.max);
+        if (spec.step !== undefined) numOut.step = String(spec.step);
+        input.addEventListener('input', function () { numOut.value = input.value; onParamChanged(); });
+        numOut.addEventListener('input', function () { input.value = numOut.value; onParamChanged(); });
+        row.appendChild(input);
+        row.appendChild(numOut);
+        paramControls[spec.path] = { spec: spec, get: function () { return Number(input.value); } };
+        el.appendChild(row);
+        return;
+      } else if (spec.type === 'enum') {
+        input = document.createElement('select');
+        spec.options.forEach(function (opt) {
+          var o = document.createElement('option');
+          o.value = opt;
+          o.textContent = opt;
+          input.appendChild(o);
+        });
+        input.value = currentValue === undefined ? spec.default : String(currentValue);
+      }
+      input.addEventListener('change', onParamChanged);
+      input.addEventListener('input', onParamChanged);
+      row.appendChild(input);
+      el.appendChild(row);
+      paramControls[spec.path] = {
+        spec: spec,
+        get: function () { return spec.type === 'boolean' ? input.checked : input.value; },
+      };
+    });
+    updatePatchPreview();
+  }
+
+  function currentPatch() {
+    var patch = {};
+    Object.keys(paramControls).forEach(function (path) {
+      var ctl = paramControls[path];
+      var value = ctl.get();
+      var baseValue = getAtPath(state.run.effectiveConfig, path);
+      var baseValueForCompare = baseValue === undefined ? ctl.spec.default : baseValue;
+      if (String(value) !== String(baseValueForCompare)) patch[path] = value;
+    });
+    return patch;
+  }
+
+  function onParamChanged() {
+    updatePatchPreview();
+  }
+
+  function updatePatchPreview() {
+    var patch = currentPatch();
+    var keys = Object.keys(patch);
+    document.getElementById('patchPreview').textContent = keys.length === 0 ? '(no changes)' : JSON.stringify(patch);
+    document.getElementById('applyBtn').disabled = keys.length === 0 || !state.selectedRunId;
+  }
+
+  document.getElementById('applyBtn').addEventListener('click', function () {
+    var patch = currentPatch();
+    if (Object.keys(patch).length === 0 || !state.selectedRunId) return;
+    var btn = document.getElementById('applyBtn');
+    btn.disabled = true;
+    btn.textContent = 'running...';
+    postJson('/api/replay', { parentRunId: state.selectedRunId, patch: patch }).then(function (run) {
+      btn.textContent = 'apply -> new run';
+      return loadSession().then(function () { return selectRun(run.runId); });
+    }).catch(function (err) {
+      btn.disabled = false;
+      btn.textContent = 'apply -> new run';
+      alert('replay failed: ' + err.message);
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
+  // grid
+  // ---------------------------------------------------------------------------------
+  function renderGridForm() {
+    var el = document.getElementById('gridForm');
+    el.innerHTML = '';
+    if (!state.session) return;
+    var schema = state.session.paramSchema;
+    [0, 1].forEach(function (slot) {
+      var row = document.createElement('div');
+      row.className = 'gridrow';
+      var select = document.createElement('select');
+      var noneOpt = document.createElement('option');
+      noneOpt.value = '';
+      noneOpt.textContent = slot === 0 ? '(pick a param)' : '(optional 2nd axis)';
+      select.appendChild(noneOpt);
+      schema.forEach(function (spec) {
+        var o = document.createElement('option');
+        o.value = spec.path;
+        o.textContent = spec.label;
+        select.appendChild(o);
+      });
+      var values = document.createElement('input');
+      values.type = 'text';
+      values.placeholder = 'comma-separated values';
+      row.appendChild(select);
+      row.appendChild(values);
+      el.appendChild(row);
+      el['slot' + slot] = { select: select, values: values };
+    });
+  }
+
+  function parseAxisValues(spec, raw) {
+    return raw.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; }).map(function (s) {
+      if (spec.type === 'boolean') return s === 'true';
+      if (spec.type === 'number') return Number(s);
+      return s;
+    });
+  }
+
+  document.getElementById('gridBtn').addEventListener('click', function () {
+    if (!state.selectedRunId) return;
+    var status = document.getElementById('gridStatus');
+    var el = document.getElementById('gridForm');
+    var axes = {};
+    [0, 1].forEach(function (slot) {
+      var pair = el['slot' + slot];
+      if (!pair || !pair.select.value || !pair.values.value.trim()) return;
+      var spec = state.session.paramSchema.find(function (s) { return s.path === pair.select.value; });
+      axes[pair.select.value] = parseAxisValues(spec, pair.values.value);
+    });
+    if (Object.keys(axes).length === 0) { status.textContent = 'pick at least one axis with values.'; return; }
+    status.textContent = 'running grid...';
+    postJson('/api/grid', { parentRunId: state.selectedRunId, axes: axes }).then(function (runs) {
+      status.textContent = runs.length + ' children created.';
+      return loadSession();
+    }).catch(function (err) {
+      status.textContent = 'grid failed: ' + err.message;
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
+  // experiment tree
+  // ---------------------------------------------------------------------------------
+  function patchSummary(run) {
+    if (!run.patch) return 'baseline';
+    var keys = Object.keys(run.patch);
+    return keys.map(function (k) { return k + '=' + JSON.stringify(run.patch[k]); }).join(', ');
+  }
+  function summaryPreview(run) {
+    var keys = Object.keys(run.summary || {}).slice(0, 2);
+    return keys.map(function (k) { return k + '=' + run.summary[k]; }).join(' ');
+  }
+
+  function renderTree() {
+    var el = document.getElementById('tree');
+    el.innerHTML = '';
+    if (!state.session) return;
+    var runs = state.session.runs;
+    var childrenOf = {};
+    runs.forEach(function (r) {
+      var key = r.parentRunId === null ? '__root__' : r.parentRunId;
+      (childrenOf[key] = childrenOf[key] || []).push(r);
+    });
+    function buildList(parentKey) {
+      var list = childrenOf[parentKey];
+      if (!list || list.length === 0) return null;
+      var ul = document.createElement('ul');
+      list.forEach(function (run) {
+        var li = document.createElement('li');
+        var node = document.createElement('div');
+        node.className = 'treenode' +
+          (run.runId === state.selectedRunId ? ' selected' : '') +
+          (run.runId === state.pinnedA ? ' pinnedA' : '') +
+          (run.runId === state.pinnedB ? ' pinnedB' : '');
+        node.innerHTML = '<span class="runlabel">' + run.runId.slice(0, 8) + '</span> ' +
+          '<span class="runpatch">' + escapeHtml(patchSummary(run)) + '</span> ' +
+          '<span class="runsummary">' + escapeHtml(summaryPreview(run)) + '</span>';
+        node.addEventListener('click', function () { selectRun(run.runId); });
+        li.appendChild(node);
+        var childList = buildList(run.runId);
+        if (childList) li.appendChild(childList);
+        ul.appendChild(li);
+      });
+      return ul;
+    }
+    var rootList = buildList('__root__');
+    if (rootList) el.appendChild(rootList);
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // ---------------------------------------------------------------------------------
+  // A/B panel
+  // ---------------------------------------------------------------------------------
+  function renderAbPanel() {
+    var el = document.getElementById('abPanel');
+    el.innerHTML = '';
+    var row = document.createElement('div');
+    row.className = 'abrow';
+    var pinA = document.createElement('button');
+    pinA.textContent = 'pin as A';
+    pinA.disabled = !state.selectedRunId;
+    pinA.addEventListener('click', function () { state.pinnedA = state.selectedRunId; renderAbPanel(); renderTree(); maybeDiff(); });
+    var pinB = document.createElement('button');
+    pinB.textContent = 'pin as B';
+    pinB.disabled = !state.selectedRunId;
+    pinB.addEventListener('click', function () { state.pinnedB = state.selectedRunId; renderAbPanel(); renderTree(); maybeDiff(); });
+    row.appendChild(pinA);
+    row.appendChild(pinB);
+    el.appendChild(row);
+
+    var status = document.createElement('div');
+    status.className = 'small';
+    status.textContent = 'A=' + (state.pinnedA ? state.pinnedA.slice(0, 8) : '(none)') + ' B=' + (state.pinnedB ? state.pinnedB.slice(0, 8) : '(none)');
+    el.appendChild(status);
+
+    if (state.diff) {
+      el.appendChild(renderDiffTables(state.diff));
+    }
+  }
+
+  function maybeDiff() {
+    if (!state.pinnedA || !state.pinnedB) return;
+    getJson('/api/diff?a=' + encodeURIComponent(state.pinnedA) + '&b=' + encodeURIComponent(state.pinnedB)).then(function (diff) {
+      state.diff = diff;
+      renderAbPanel();
+    }).catch(function (err) {
+      state.diff = { error: err.message };
+      renderAbPanel();
+    });
+  }
+
+  function renderDiffTables(diff) {
+    var wrap = document.createElement('div');
+    if (diff.error) {
+      wrap.innerHTML = '<div class="err">' + escapeHtml(diff.error) + '</div>';
+      return wrap;
+    }
+    var configTable = document.createElement('table');
+    configTable.className = 'diffTable';
+    configTable.innerHTML = '<thead><tr><th>config path</th><th>A</th><th>B</th></tr></thead>';
+    var cbody = document.createElement('tbody');
+    diff.configDiff.forEach(function (d) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + escapeHtml(d.path) + '</td><td class="a">' + escapeHtml(JSON.stringify(d.a)) + '</td><td class="b">' + escapeHtml(JSON.stringify(d.b)) + '</td>';
+      cbody.appendChild(tr);
+    });
+    configTable.appendChild(cbody);
+    wrap.appendChild(document.createElement('br'));
+    wrap.appendChild(configTable);
+
+    var summaryTable = document.createElement('table');
+    summaryTable.className = 'diffTable';
+    summaryTable.innerHTML = '<thead><tr><th>summary key</th><th>A</th><th>B</th></tr></thead>';
+    var sbody = document.createElement('tbody');
+    diff.summaryDiff.forEach(function (d) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + escapeHtml(d.key) + '</td><td class="a">' + escapeHtml(JSON.stringify(d.a)) + '</td><td class="b">' + escapeHtml(JSON.stringify(d.b)) + '</td>';
+      sbody.appendChild(tr);
+    });
+    summaryTable.appendChild(sbody);
+    wrap.appendChild(document.createElement('br'));
+    wrap.appendChild(summaryTable);
+
+    var stageDiv = document.createElement('div');
+    stageDiv.style.marginTop = '6px';
+    if (diff.firstDivergentStage) {
+      var fd = diff.firstDivergentStage;
+      stageDiv.innerHTML = '<b>first divergent stage:</b> ' + escapeHtml(fd.stageName || 'stage#' + fd.stageId) +
+        ' (seq ' + fd.seq + '): ' + escapeHtml(fd.reason);
+    } else {
+      stageDiv.innerHTML = '<b class="ok">equivalent</b> through every shared stage invocation.';
+    }
+    wrap.appendChild(stageDiv);
+    return wrap;
+  }
+
+  // ---------------------------------------------------------------------------------
+  // runs summary table
+  // ---------------------------------------------------------------------------------
+  function renderTable() {
+    var table = document.getElementById('runsTable');
+    var thead = table.querySelector('thead');
+    var tbody = table.querySelector('tbody');
+    thead.innerHTML = '';
+    tbody.innerHTML = '';
+    if (!state.session) return;
+    var runs = state.session.runs.slice();
+    var summaryKeys = [];
+    runs.forEach(function (r) {
+      Object.keys(r.summary || {}).forEach(function (k) { if (summaryKeys.indexOf(k) === -1) summaryKeys.push(k); });
+    });
+    var columns = ['runId', 'patch'].concat(summaryKeys);
+
+    if (state.sortKey) {
+      runs.sort(function (r1, r2) {
+        var v1 = state.sortKey === 'runId' ? r1.runId : state.sortKey === 'patch' ? patchSummary(r1) : (r1.summary || {})[state.sortKey];
+        var v2 = state.sortKey === 'runId' ? r2.runId : state.sortKey === 'patch' ? patchSummary(r2) : (r2.summary || {})[state.sortKey];
+        if (v1 === v2) return 0;
+        if (v1 === undefined) return 1;
+        if (v2 === undefined) return -1;
+        return (v1 < v2 ? -1 : 1) * state.sortDir;
+      });
+    }
+
+    var trHead = document.createElement('tr');
+    columns.forEach(function (col) {
+      var th = document.createElement('th');
+      th.textContent = col + (state.sortKey === col ? (state.sortDir === 1 ? ' ▲' : ' ▼') : '');
+      th.addEventListener('click', function () {
+        if (state.sortKey === col) state.sortDir = -state.sortDir;
+        else { state.sortKey = col; state.sortDir = 1; }
+        renderTable();
+      });
+      trHead.appendChild(th);
+    });
+    thead.appendChild(trHead);
+
+    runs.forEach(function (run) {
+      var tr = document.createElement('tr');
+      if (run.runId === state.selectedRunId) tr.style.background = '#1f2330';
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', function () { selectRun(run.runId); });
+      columns.forEach(function (col) {
+        var td = document.createElement('td');
+        if (col === 'runId') td.textContent = run.runId.slice(0, 8);
+        else if (col === 'patch') td.textContent = patchSummary(run);
+        else td.textContent = (run.summary || {})[col] === undefined ? '' : String((run.summary || {})[col]);
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ---------------------------------------------------------------------------------
+  // boot
+  // ---------------------------------------------------------------------------------
+  fetch('/api/source-image').then(function (res) {
+    if (res.ok) {
+      state.sourceImageAvailable = true;
+      img.src = '/api/source-image?_=' + Date.now();
+    }
+  }).catch(function () {});
+
+  loadSession().catch(function (err) {
+    document.getElementById('pipelineMeta').textContent = 'failed to load session: ' + err.message;
+  });
+})();
+</script>
+</body>
+</html>
