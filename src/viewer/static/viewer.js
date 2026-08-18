@@ -14,7 +14,7 @@
     measured: '#38bdf8', current: '#f59e0b', proposed: '#34d399',
     threshold: '#f87171', historical: '#64748b', context: '#94a3b8',
     sel: '#ffffff', hole: '#ffd166', tee: '#c7d2e6', basket: '#ffffff',
-    assigned: '#34d399', reassigned: '#f59e0b',
+    assigned: '#34d399', reassigned: '#f59e0b', dim: '#93a0b8',
   };
 
   var state = {
@@ -758,6 +758,7 @@
     });
   }
   function selectRun(runId) {
+    var prev = state.selectedRunId;
     state.selectedRunId = runId; state.diff = null;
     return Promise.all([
       getJson('/api/run/' + encodeURIComponent(runId)),
@@ -772,6 +773,11 @@
       renderStagebar(); renderStageEvidence(); renderSelection(); renderLegend();
       renderTree(); renderTable(); renderAb(); renderParams();
       draw();
+    }).catch(function (err) {
+      // Don't leave a torn state: revert the selection so the panels keep matching the run on screen.
+      state.selectedRunId = prev;
+      renderTree(); renderTable(); renderAb();
+      alert('failed to load run: ' + err.message);
     });
   }
 
